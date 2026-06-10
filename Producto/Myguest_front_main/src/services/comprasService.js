@@ -1,4 +1,4 @@
-const API_URL = 'https://myguest-production-9e8f.up.railway.app'
+const API_URL = import.meta.env.VITE_API_URL || 'https://myguest-production-9e8f.up.railway.app'
 
 const getHeaders = (token) => ({
   'Content-Type': 'application/json',

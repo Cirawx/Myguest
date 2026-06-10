@@ -1,11 +1,19 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import MainLayout from "../../layouts/MainLayout";
 import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
 import { getDashboardData } from "../../services/dashboardService";
 import styles from "./DashboardPage.module.css";
-import {BarChart,Bar,XAxis,YAxis,Tooltip,ResponsiveContainer,Cell,} from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 const DashboardPage = () => {
   const { isDark } = useThemeStore();
@@ -55,7 +63,6 @@ const DashboardPage = () => {
       color: "#f59e0b",
     },
   ];
-  
 
   return (
     <MainLayout>
@@ -115,46 +122,73 @@ const DashboardPage = () => {
             >
               📊 Productos con Menor Stock
             </h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart
-                data={data.stockBajo}
-                layout="vertical"
-                margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+
+            {data.stockBajo.filter((p) => p.stock_actual > 0).length === 0 ? (
+              <p
+                style={{
+                  textAlign: "center",
+                  color: "#6b7280",
+                  padding: "40px 0",
+                }}
               >
-                <XAxis type="number" stroke="#6b7280" fontSize={12} />
-                <YAxis
-                  type="category"
-                  dataKey="nombre_producto"
-                  stroke="#6b7280"
-                  fontSize={11}
-                  width={150}
-                  tickFormatter={(v) =>
-                    v?.length > 20 ? v.substring(0, 20) + "..." : v
-                  }
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: isDark ? "#1f2937" : "#ffffff",
-                    border: "1px solid #374151",
-                    borderRadius: "8px",
-                    color: isDark ? "#ffffff" : "#111827",
-                  }}
-                  formatter={(value) => [value, "Stock actual"]}
-                />
-                <Bar dataKey="stock_actual" radius={[0, 6, 6, 0]}>
-                  {data.stockBajo.map((entry, index) => (
-                    <Cell
-                      key={index}
-                      fill={
-                        entry.stock_actual <= entry.stock_minimo
-                          ? "#ef4444"
-                          : "#22c55e"
-                      }
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                No hay productos con stock disponible
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={data.stockBajo
+                    .filter((p) => p.stock_actual > 0)
+                    .sort((a, b) => a.stock_actual - b.stock_actual)
+                    .slice(0, 10)}
+                  layout="vertical"
+                  margin={{ top: 10, right: 40, left: 10, bottom: 0 }}
+                >
+                  <XAxis
+                    type="number"
+                    stroke="#6b7280"
+                    fontSize={12}
+                    domain={[0, "auto"]}
+                    allowDecimals={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="nom_producto"
+                    stroke="#6b7280"
+                    fontSize={12}
+                    width={160}
+                    tickFormatter={(v) =>
+                      v?.length > 22 ? v.substring(0, 22) + "..." : v
+                    }
+                  />
+                  <Tooltip
+                    cursor={{ fill: isDark ? "#ffffff11" : "#00000011" }}
+                    contentStyle={{
+                      backgroundColor: isDark ? "#1f2937" : "#ffffff",
+                      border: "1px solid #374151",
+                      borderRadius: "8px",
+                      color: isDark ? "#ffffff" : "#111827",
+                    }}
+                    formatter={(value) => [value, "Stock actual"]}
+                  />
+                  <Bar dataKey="stock_actual" radius={[0, 6, 6, 0]}>
+                    {data.stockBajo
+                      .filter((p) => p.stock_actual > 0)
+                      .sort((a, b) => a.stock_actual - b.stock_actual)
+                      .slice(0, 10)
+                      .map((entry, index) => (
+                        <Cell
+                          key={index}
+                          fill={
+                            entry.stock_actual <= entry.stock_minimo
+                              ? "#ef4444"
+                              : "#22c55e"
+                          }
+                        />
+                      ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         )}
 
@@ -239,24 +273,45 @@ const DashboardPage = () => {
                 count: data?.totalProveedores,
               },
               {
-                label: "Compras",
-                icon: "🛒",
-                path: "/compras",
-                descripcion: "Órdenes y proveedores",
-                disponible: false,
+                label: "Académico",
+                icon: "🎓",
+                path: "/academico",
+                descripcion: "Programación y talleres",
+                disponible: true,
               },
               {
                 label: "Facturación",
                 icon: "📄",
                 path: "/facturacion",
                 descripcion: "Documentos tributarios",
-                disponible: false,
+                disponible: true,
+              },
+              {
+                label: "Compras",
+                icon: "🛒",
+                path: "/compras",
+                descripcion: "Órdenes y proveedores",
+                disponible: true,
               },
               {
                 label: "Mermas",
                 icon: "🗑️",
                 path: "/mermas",
                 descripcion: "Control de pérdidas",
+                disponible: true,
+              },
+              {
+                label: "Devoluciones",
+                icon: "↩️",
+                path: "/devoluciones",
+                descripcion: "Gestión de devoluciones",
+                disponible: true,
+              },
+              {
+                label: "Reportes",
+                icon: "📈",
+                path: "/reportes",
+                descripcion: "Reportes del sistema",
                 disponible: false,
               },
             ].map((modulo) => (

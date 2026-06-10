@@ -1,45 +1,45 @@
-import { useState } from 'react'
-import useThemeStore from '../../store/themeStore'
-import useAuthStore from '../../store/authStore'
-import styles from './ProveedorModal.module.css'
+import { useState } from "react";
+import useThemeStore from "../../store/themeStore";
+import useAuthStore from "../../store/authStore";
+import styles from "./ProveedorModal.module.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const ProveedorModal = ({ proveedor, onClose, onGuardado }) => {
-  const { isDark } = useThemeStore()
-  const { token } = useAuthStore()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const esEdicion = !!proveedor
+  const { isDark } = useThemeStore();
+  const { token } = useAuthStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const esEdicion = !!proveedor;
 
   const [form, setForm] = useState({
-    nom_proveedor: proveedor?.nom_proveedor || '',
-    rut: proveedor?.rut || '',
-    contacto: proveedor?.contacto || '',
-    email: proveedor?.email || '',
-    telefono: proveedor?.telefono || '',
-  })
+    nom_proveedor: proveedor?.nom_proveedor || "",
+    rut: proveedor?.rut || "",
+    contacto: proveedor?.contacto || "",
+    email: proveedor?.email || "",
+    telefono: proveedor?.telefono || "",
+  });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const url = esEdicion
-        ? `http://127.0.0.1:8000/proveedores/${proveedor.id_proveedor}`
-        : 'http://127.0.0.1:8000/proveedores/'
-      const method = esEdicion ? 'PUT' : 'POST'
+        ? `${API_URL}/proveedores/${proveedor.id_proveedor}`
+        : `${API_URL}/proveedores/`;
+      const method = esEdicion ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           nom_proveedor: form.nom_proveedor,
@@ -47,22 +47,22 @@ const ProveedorModal = ({ proveedor, onClose, onGuardado }) => {
           contacto: form.contacto || null,
           email: form.email || null,
           telefono: form.telefono || null,
-        })
-      })
+        }),
+      });
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Error al guardar el proveedor')
+        const data = await response.json();
+        throw new Error(data.detail || "Error al guardar el proveedor");
       }
 
-      onGuardado()
-      onClose()
+      onGuardado();
+      onClose();
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -71,15 +71,18 @@ const ProveedorModal = ({ proveedor, onClose, onGuardado }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
-          <h2 className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}>
-            {esEdicion ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+          <h2
+            className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}
+          >
+            {esEdicion ? "Editar Proveedor" : "Nuevo Proveedor"}
           </h2>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <button className={styles.closeBtn} onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.grid}>
-
             <div className={`${styles.field} ${styles.fullWidth}`}>
               <label className={styles.label}>Nombre del proveedor *</label>
               <input
@@ -136,7 +139,6 @@ const ProveedorModal = ({ proveedor, onClose, onGuardado }) => {
                 className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
               />
             </div>
-
           </div>
 
           {error && <div className={styles.error}>{error}</div>}
@@ -154,13 +156,17 @@ const ProveedorModal = ({ proveedor, onClose, onGuardado }) => {
               disabled={loading}
               className={styles.submitBtn}
             >
-              {loading ? 'Guardando...' : esEdicion ? 'Guardar Cambios' : 'Crear Proveedor'}
+              {loading
+                ? "Guardando..."
+                : esEdicion
+                  ? "Guardar Cambios"
+                  : "Crear Proveedor"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProveedorModal
+export default ProveedorModal;

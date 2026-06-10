@@ -3,6 +3,8 @@ import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
 import styles from "./UsuarioModal.module.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 const UsuarioModal = ({ onClose, onUsuarioCreado }) => {
   const { isDark } = useThemeStore();
   const { token } = useAuthStore();
@@ -58,7 +60,7 @@ const UsuarioModal = ({ onClose, onUsuarioCreado }) => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/usuarios/", {
+      const response = await fetch(`${API_URL}/usuarios/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

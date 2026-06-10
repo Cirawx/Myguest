@@ -11,10 +11,12 @@ export const getDashboardData = async (token) => {
     fetch(`${API_URL}/inventario/`, { headers }).then(r => r.json()),
   ])
 
+  console.log("inventario[0]:", inventario[0])
+
   const stockOrdenado = inventario
-    .filter(i => i.stock_actual !== null)
-    .sort((a, b) => a.stock_actual - b.stock_actual)
-    .slice(0, 5)
+  .filter(i => i.stock_actual !== null && i.stock_actual >= 0)
+  .sort((a, b) => a.stock_actual - b.stock_actual)
+  .slice(0, 5)
 
   return {
     totalUsuarios: usuarios.length,

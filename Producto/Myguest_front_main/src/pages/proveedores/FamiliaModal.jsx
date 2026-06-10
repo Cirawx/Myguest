@@ -3,7 +3,7 @@ import useThemeStore from '../../store/themeStore'
 import useAuthStore from '../../store/authStore'
 import styles from './ProveedorModal.module.css'
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || `${API_URL}`;
 
 const FamiliaModal = ({ familia, proveedores, onClose, onGuardado }) => {
   const { isDark } = useThemeStore()
@@ -29,8 +29,8 @@ const FamiliaModal = ({ familia, proveedores, onClose, onGuardado }) => {
 
     try {
       const url = esEdicion
-        ? `http://127.0.0.1:8000/familias/${familia.cod_familia}`
-        : 'http://127.0.0.1:8000/familias/'
+        ? `${API_URL}/familias/${familia.cod_familia}`
+        : `${API_URL}/familias/`
       const method = esEdicion ? 'PUT' : 'POST'
 
       const body = esEdicion

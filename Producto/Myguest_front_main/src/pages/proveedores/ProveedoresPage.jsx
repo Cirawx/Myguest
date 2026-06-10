@@ -5,8 +5,13 @@ import useAuthStore from "../../store/authStore";
 import styles from "./ProveedoresPage.module.css";
 import ProveedorModal from "./ProveedorModal";
 import FamiliaModal from "./FamiliaModal";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import {
+  getProveedores,
+  getFamilias,
+  desactivarProveedor as desactivarProveedorService,
+  activarProveedor as activarProveedorService,
+  eliminarFamilia as eliminarFamiliaService,
+} from "../../services/proveedoresService";
 
 const ProveedoresPage = () => {
   const { isDark } = useThemeStore();
@@ -31,12 +36,9 @@ const ProveedoresPage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
       const [provRes, famRes] = await Promise.all([
-        fetch(`${API_URL}/proveedores/?todos=${mostrarTodos}`, {
-          headers,
-        }).then((r) => r.json()),
-        fetch(`${API_URL}/familias/`, { headers }).then((r) => r.json()),
+        getProveedores(token, mostrarTodos),
+        getFamilias(token),
       ]);
       setProveedores(provRes);
       setFamilias(famRes);
@@ -49,10 +51,7 @@ const ProveedoresPage = () => {
 
   const desactivarProveedor = async (id) => {
     try {
-      await fetch(`${API_URL}/proveedores/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await desactivarProveedorService(token, id);
       setItemEliminar(null);
       setExpandido(null);
       fetchData();
@@ -63,14 +62,7 @@ const ProveedoresPage = () => {
 
   const activarProveedor = async (id) => {
     try {
-      await fetch(`${API_URL}/proveedores/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ activo: true }),
-      });
+      await activarProveedorService(token, id, { activo: true });
       setItemEliminar(null);
       setExpandido(null);
       fetchData();
@@ -81,10 +73,7 @@ const ProveedoresPage = () => {
 
   const eliminarFamilia = async (cod) => {
     try {
-      await fetch(`${API_URL}/familias/${cod}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await eliminarFamiliaService(token, cod);
       setItemEliminar(null);
       fetchData();
     } catch (err) {

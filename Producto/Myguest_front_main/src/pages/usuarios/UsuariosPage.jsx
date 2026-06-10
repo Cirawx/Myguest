@@ -5,8 +5,10 @@ import useAuthStore from "../../store/authStore";
 import styles from "./UsuariosPage.module.css";
 import UsuarioModal from "./UsuarioModal";
 import UsuarioEditModal from "./UsuarioEditModal";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import {
+  getUsuarios,
+  eliminarUsuario as eliminarUsuarioService,
+} from "../../services/usuariosService";
 
 const UsuariosPage = () => {
   const { isDark } = useThemeStore();
@@ -24,10 +26,7 @@ const UsuariosPage = () => {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const response = await fetch(`${API_URL}/usuarios/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
+        const data = await getUsuarios(token);
         setUsuarios(data);
       } catch (err) {
         setError("Error al cargar los usuarios");
@@ -63,10 +62,7 @@ const UsuariosPage = () => {
   const recargarUsuarios = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/usuarios/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
+      const data = await getUsuarios(token);
       setUsuarios(data);
     } catch (err) {
       setError("Error al cargar los usuarios");
@@ -77,14 +73,7 @@ const UsuariosPage = () => {
 
   const eliminarUsuario = async () => {
     try {
-      const response = await fetch(
-        `${API_URL}/usuarios/${usuarioEliminar.id_usuario}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      if (!response.ok) throw new Error("Error al eliminar");
+      await eliminarUsuarioService(token, usuarioEliminar.id_usuario);
       setUsuarioEliminar(null);
       setExpandido(null);
       recargarUsuarios();
@@ -229,7 +218,9 @@ const UsuariosPage = () => {
                   >
                     <div className={styles.acordeonGrid}>
                       <div className={styles.acordeonItem}>
-                        <span className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}>
+                        <span
+                          className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                        >
                           Nombre completo
                         </span>
                         <span
@@ -244,7 +235,9 @@ const UsuariosPage = () => {
                         </span>
                       </div>
                       <div className={styles.acordeonItem}>
-                        <span className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}>
+                        <span
+                          className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                        >
                           Correo institucional
                         </span>
                         <span
@@ -254,7 +247,11 @@ const UsuariosPage = () => {
                         </span>
                       </div>
                       <div className={styles.acordeonItem}>
-                        <span className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}>Perfil</span>
+                        <span
+                          className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                        >
+                          Perfil
+                        </span>
                         <span
                           className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
                         >
@@ -262,7 +259,11 @@ const UsuariosPage = () => {
                         </span>
                       </div>
                       <div className={styles.acordeonItem}>
-                        <span className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}>Carrera</span>
+                        <span
+                          className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                        >
+                          Carrera
+                        </span>
                         <span
                           className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
                         >
@@ -270,7 +271,11 @@ const UsuariosPage = () => {
                         </span>
                       </div>
                       <div className={styles.acordeonItem}>
-                        <span className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}>ID Usuario</span>
+                        <span
+                          className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                        >
+                          ID Usuario
+                        </span>
                         <span
                           className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
                         >

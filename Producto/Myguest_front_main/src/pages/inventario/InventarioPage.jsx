@@ -4,14 +4,12 @@ import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
 import styles from "./InventarioPage.module.css";
 import ProductoModal from "./ProductoModal";
-import ProductoEditModal from './ProductoEditModal'
-
+import ProductoEditModal from "./ProductoEditModal";
 import {
   getNombreUnidad,
   getNombreCategoria,
 } from "../../utils/inventarioData";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import { getProductos, getInventario, getFamilias, eliminarProducto as eliminarProductoService, actualizarStockMinimo } from "../../services/inventarioService";
 
 const InventarioPage = () => {
   const { isDark } = useThemeStore();
@@ -30,11 +28,10 @@ const InventarioPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const headers = { Authorization: `Bearer ${token}` };
         const [productosRes, stockRes, familiasRes] = await Promise.all([
-          fetch(`${API_URL}/productos/`, { headers }).then((r) => r.json()),
-          fetch(`${API_URL}/inventario/`, { headers }).then((r) => r.json()),
-          fetch(`${API_URL}/familias/`, { headers }).then((r) => r.json()),
+          getProductos(token),
+          getInventario(token),
+          getFamilias(token),
         ]);
         setProductos(productosRes);
         setStock(stockRes);
@@ -73,9 +70,7 @@ const InventarioPage = () => {
 
   const recargarProductos = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await fetch(`${API_URL}/productos/`, { headers });
-      const data = await res.json();
+      const data = await getProductos(token);
       setProductos(data);
     } catch (err) {
       console.error("Error recargando productos:", err);
@@ -203,7 +198,12 @@ const InventarioPage = () => {
             />
           )
         ) : (
-          <TablaStock stock={stockFiltrado} isDark={isDark} token={token} onRecargar={recargarProductos} />
+          <TablaStock
+            stock={stockFiltrado}
+            isDark={isDark}
+            token={token}
+            onRecargar={recargarProductos}
+          />
         )}
 
         {mostrarModal && (
@@ -225,20 +225,7 @@ const TablaProductos = ({ productos, isDark, familias, token, onRecargar }) => {
 
   const eliminarProducto = async () => {
     try {
-      await fetch(
-        `http://127.0.0.1:8000/inventario/${productoEliminar.id_producto}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      await fetch(
-        `http://127.0.0.1:8000/productos/${productoEliminar.id_producto}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      await eliminarProductoService(token, productoEliminar.id_producto);
       setProductoEliminar(null);
       setExpandido(null);
       onRecargar();
@@ -246,7 +233,6 @@ const TablaProductos = ({ productos, isDark, familias, token, onRecargar }) => {
       console.error("Error eliminando producto:", err);
     }
   };
-
   return (
     <>
       <div
@@ -420,35 +406,33 @@ const TablaProductos = ({ productos, isDark, familias, token, onRecargar }) => {
 };
 
 const TablaStock = ({ stock, isDark, token, onRecargar }) => {
-  const [expandido, setExpandido] = useState(null)
-  const [nuevoMinimo, setNuevoMinimo] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [expandido, setExpandido] = useState(null);
+  const [nuevoMinimo, setNuevoMinimo] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const actualizarStockMinimo = async (id_producto) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/inventario/${id_producto}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ stock_minimo: parseFloat(nuevoMinimo) })
-      })
-      if (!response.ok) throw new Error('Error al actualizar')
-      setExpandido(null)
-      setNuevoMinimo('')
-      onRecargar()
+      await actualizarStockMinimo(token, id_producto, {
+        stock_minimo: parseFloat(nuevoMinimo),
+      });
+      setExpandido(null);
+      setNuevoMinimo("");
+      onRecargar();
     } catch (err) {
-      console.error('Error actualizando stock mínimo:', err)
+      console.error("Error actualizando stock mínimo:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className={`${styles.tabla} ${isDark ? styles.tablaDark : styles.tablaLight}`}>
-      <div className={`${styles.tablaHeader} ${isDark ? styles.tablaHeaderDark : styles.tablaHeaderLight}`}>
+    <div
+      className={`${styles.tabla} ${isDark ? styles.tablaDark : styles.tablaLight}`}
+    >
+      <div
+        className={`${styles.tablaHeader} ${isDark ? styles.tablaHeaderDark : styles.tablaHeaderLight}`}
+      >
         <span>Producto</span>
         <span>Stock Actual</span>
         <span>Stock Mínimo</span>
@@ -462,44 +446,76 @@ const TablaStock = ({ stock, isDark, token, onRecargar }) => {
           <div key={s.id_producto}>
             <div
               onClick={() => {
-                setExpandido(expandido === s.id_producto ? null : s.id_producto)
-                setNuevoMinimo(String(s.stock_minimo))
+                setExpandido(
+                  expandido === s.id_producto ? null : s.id_producto,
+                );
+                setNuevoMinimo(String(s.stock_minimo));
               }}
-              className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight} ${expandido === s.id_producto ? styles.tablaRowActive : ''}`}
+              className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight} ${expandido === s.id_producto ? styles.tablaRowActive : ""}`}
             >
-              <span className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}>
+              <span
+                className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}
+              >
                 {s.nom_producto}
               </span>
-              <span className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}>
+              <span
+                className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}
+              >
                 {s.stock_actual}
               </span>
-              <span className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}>
+              <span
+                className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}
+              >
                 {s.stock_minimo}
               </span>
-              <span className={`${styles.badge} ${s.stock_actual <= s.stock_minimo ? styles.badgeCritico : styles.badgeOk}`}>
-                {s.stock_actual <= s.stock_minimo ? '⚠️ Crítico' : '✅ Ok'}
+              <span
+                className={`${styles.badge} ${s.stock_actual <= s.stock_minimo ? styles.badgeCritico : styles.badgeOk}`}
+              >
+                {s.stock_actual <= s.stock_minimo ? "⚠️ Crítico" : "✅ Ok"}
               </span>
-              <span className={`${styles.chevron} ${expandido === s.id_producto ? styles.chevronOpen : ''}`}>›</span>
+              <span
+                className={`${styles.chevron} ${expandido === s.id_producto ? styles.chevronOpen : ""}`}
+              >
+                ›
+              </span>
             </div>
 
             {expandido === s.id_producto && (
-              <div className={`${styles.acordeon} ${isDark ? styles.acordeonDark : styles.acordeonLight}`}>
+              <div
+                className={`${styles.acordeon} ${isDark ? styles.acordeonDark : styles.acordeonLight}`}
+              >
                 <div className={styles.acordeonGrid}>
                   <div className={styles.acordeonItem}>
                     <span className={styles.acordeonLabel}>Stock actual</span>
-                    <span className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}>{s.stock_actual}</span>
+                    <span
+                      className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                    >
+                      {s.stock_actual}
+                    </span>
                   </div>
                   <div className={styles.acordeonItem}>
-                    <span className={styles.acordeonLabel}>Stock mínimo actual</span>
-                    <span className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}>{s.stock_minimo}</span>
+                    <span className={styles.acordeonLabel}>
+                      Stock mínimo actual
+                    </span>
+                    <span
+                      className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                    >
+                      {s.stock_minimo}
+                    </span>
                   </div>
                   <div className={styles.acordeonItem}>
                     <span className={styles.acordeonLabel}>Diferencia</span>
-                    <span className={`${styles.acordeonValue} ${s.diferencia < 0 ? styles.badgeCritico : styles.badgeOk}`}>{s.diferencia}</span>
+                    <span
+                      className={`${styles.acordeonValue} ${s.diferencia < 0 ? styles.badgeCritico : styles.badgeOk}`}
+                    >
+                      {s.diferencia}
+                    </span>
                   </div>
                 </div>
                 <div className={styles.stockMinimoForm}>
-                  <label className={styles.acordeonLabel}>Nuevo stock mínimo</label>
+                  <label className={styles.acordeonLabel}>
+                    Nuevo stock mínimo
+                  </label>
                   <div className={styles.stockMinimoInput}>
                     <input
                       type="number"
@@ -511,9 +527,12 @@ const TablaStock = ({ stock, isDark, token, onRecargar }) => {
                     <button
                       className={styles.newBtn}
                       disabled={loading}
-                      onClick={(e) => { e.stopPropagation(); actualizarStockMinimo(s.id_producto) }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        actualizarStockMinimo(s.id_producto);
+                      }}
                     >
-                      {loading ? 'Guardando...' : 'Actualizar'}
+                      {loading ? "Guardando..." : "Actualizar"}
                     </button>
                   </div>
                 </div>
@@ -526,7 +545,7 @@ const TablaStock = ({ stock, isDark, token, onRecargar }) => {
         <span className={styles.total}>{stock.length} productos</span>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default InventarioPage;

@@ -4,6 +4,8 @@ import useAuthStore from '../../store/authStore'
 import { UNIDADES, CATEGORIAS } from '../../utils/inventarioData'
 import styles from './ProductoModal.module.css'
 
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 const ProductoEditModal = ({ producto, onClose, onProductoEditado, familias }) => {
   const { isDark } = useThemeStore()
   const { token } = useAuthStore()
@@ -28,7 +30,7 @@ const ProductoEditModal = ({ producto, onClose, onProductoEditado, familias }) =
     setLoading(true)
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/productos/${producto.id_producto}`, {
+      const response = await fetch(`${API_URL}/productos/${producto.id_producto}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
