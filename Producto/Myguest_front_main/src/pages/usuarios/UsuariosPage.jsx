@@ -24,7 +24,7 @@ const UsuariosPage = () => {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const response = await fetch("${API_URL}/usuarios/", {
+        const response = await fetch(`${API_URL}/usuarios/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
@@ -63,7 +63,7 @@ const UsuariosPage = () => {
   const recargarUsuarios = async () => {
     setLoading(true);
     try {
-      const response = await fetch("${API_URL}/usuarios/", {
+      const response = await fetch(`${API_URL}/usuarios/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
