@@ -3,6 +3,8 @@ import useThemeStore from '../../store/themeStore'
 import useAuthStore from '../../store/authStore'
 import styles from './AcademicoModal.module.css'
 
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
   const { isDark } = useThemeStore()
   const { token } = useAuthStore()

@@ -6,6 +6,8 @@ import styles from "./UsuariosPage.module.css";
 import UsuarioModal from "./UsuarioModal";
 import UsuarioEditModal from "./UsuarioEditModal";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 const UsuariosPage = () => {
   const { isDark } = useThemeStore();
   const { token } = useAuthStore();
@@ -22,7 +24,7 @@ const UsuariosPage = () => {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/usuarios/", {
+        const response = await fetch("${API_URL}/usuarios/", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
@@ -61,7 +63,7 @@ const UsuariosPage = () => {
   const recargarUsuarios = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://127.0.0.1:8000/usuarios/", {
+      const response = await fetch("${API_URL}/usuarios/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -76,7 +78,7 @@ const UsuariosPage = () => {
   const eliminarUsuario = async () => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/usuarios/${usuarioEliminar.id_usuario}`,
+        `${API_URL}/usuarios/${usuarioEliminar.id_usuario}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

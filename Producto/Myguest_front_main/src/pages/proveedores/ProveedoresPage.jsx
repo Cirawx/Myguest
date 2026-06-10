@@ -6,7 +6,7 @@ import styles from "./ProveedoresPage.module.css";
 import ProveedorModal from "./ProveedorModal";
 import FamiliaModal from "./FamiliaModal";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const ProveedoresPage = () => {
   const { isDark } = useThemeStore();

@@ -6,7 +6,7 @@ import styles from "./FacturacionPage.module.css";
 import FacturaModal from "./FacturaModal";
 import FacturaEditModal from "./FacturaEditModal";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const ESTADOS = [
   { value: "", label: "Todos los estados" },

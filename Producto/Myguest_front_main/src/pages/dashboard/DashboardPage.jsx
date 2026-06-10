@@ -5,15 +5,7 @@ import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
 import { getDashboardData } from "../../services/dashboardService";
 import styles from "./DashboardPage.module.css";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import {BarChart,Bar,XAxis,YAxis,Tooltip,ResponsiveContainer,Cell,} from "recharts";
 
 const DashboardPage = () => {
   const { isDark } = useThemeStore();
