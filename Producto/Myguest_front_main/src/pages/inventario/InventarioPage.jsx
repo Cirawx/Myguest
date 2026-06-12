@@ -9,7 +9,13 @@ import {
   getNombreUnidad,
   getNombreCategoria,
 } from "../../utils/inventarioData";
-import { getProductos, getInventario, getFamilias, eliminarProducto as eliminarProductoService, actualizarStockMinimo } from "../../services/inventarioService";
+import {
+  getProductos,
+  getInventario,
+  getFamilias,
+  eliminarProducto as eliminarProductoService,
+  actualizarStockMinimo,
+} from "../../services/inventarioService";
 
 const InventarioPage = () => {
   const { isDark } = useThemeStore();
@@ -70,13 +76,17 @@ const InventarioPage = () => {
 
   const recargarProductos = async () => {
     try {
-      const data = await getProductos(token);
-      setProductos(data);
+      const [productosData, stockData] = await Promise.all([
+        getProductos(token),
+        getInventario(token),
+      ]);
+      setProductos(productosData);
+      setStock(stockData);
     } catch (err) {
-      console.error("Error recargando productos:", err);
+      console.error("Error recargando datos:", err);
     }
   };
-
+  
   return (
     <MainLayout>
       <div className={styles.container}>
@@ -222,6 +232,18 @@ const TablaProductos = ({ productos, isDark, familias, token, onRecargar }) => {
   const [expandido, setExpandido] = useState(null);
   const [productoEliminar, setProductoEliminar] = useState(null);
   const [productoEditar, setProductoEditar] = useState(null);
+  const [pagina, setPagina] = useState(1);
+  const ITEMS_POR_PAGINA = 25;
+
+  const totalPaginas = Math.ceil(productos.length / ITEMS_POR_PAGINA);
+  const productosPaginados = productos.slice(
+    (pagina - 1) * ITEMS_POR_PAGINA,
+    pagina * ITEMS_POR_PAGINA,
+  );
+
+  useEffect(() => {
+    setPagina(1);
+  }, [productos]);
 
   const eliminarProducto = async () => {
     try {
@@ -250,7 +272,7 @@ const TablaProductos = ({ productos, isDark, familias, token, onRecargar }) => {
         {productos.length === 0 ? (
           <p className={styles.empty}>No hay productos</p>
         ) : (
-          productos.map((p) => (
+          productosPaginados.map((p) => (
             <div key={p.id_producto}>
               <div
                 onClick={() =>
@@ -360,6 +382,54 @@ const TablaProductos = ({ productos, isDark, familias, token, onRecargar }) => {
         )}
         <div className={styles.tablaFooter}>
           <span className={styles.total}>{productos.length} productos</span>
+          {totalPaginas > 1 && (
+            <div className={styles.paginacion}>
+              <button
+                className={styles.paginaBtn}
+                onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                disabled={pagina === 1}
+              >
+                ‹
+              </button>
+              <div className={styles.paginacionNumeros}>
+                {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                  .filter((p) => {
+                    if (p === 1 || p === totalPaginas) return true;
+                    if (pagina <= 3) return p <= 5;
+                    if (pagina >= totalPaginas - 2)
+                      return p >= totalPaginas - 4;
+                    return Math.abs(p - pagina) <= 2;
+                  })
+                  .reduce((acc, p, i, arr) => {
+                    if (i > 0 && arr[i - 1] !== p - 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "..." ? (
+                      <span key={`dots-${i}`} className={styles.paginaDots}>
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        className={`${styles.paginaBtn} ${pagina === p ? styles.paginaBtnActiva : ""}`}
+                        onClick={() => setPagina(p)}
+                      >
+                        {p}
+                      </button>
+                    ),
+                  )}
+              </div>
+              <button
+                className={styles.paginaBtn}
+                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                disabled={pagina === totalPaginas}
+              >
+                ›
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -409,8 +479,20 @@ const TablaStock = ({ stock, isDark, token, onRecargar }) => {
   const [expandido, setExpandido] = useState(null);
   const [nuevoMinimo, setNuevoMinimo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pagina, setPagina] = useState(1);
+  const ITEMS_POR_PAGINA = 25;
 
-  const actualizarStockMinimo = async (id_producto) => {
+  const totalPaginas = Math.ceil(stock.length / ITEMS_POR_PAGINA);
+  const stockPaginado = stock.slice(
+    (pagina - 1) * ITEMS_POR_PAGINA,
+    pagina * ITEMS_POR_PAGINA,
+  );
+
+  useEffect(() => {
+    setPagina(1);
+  }, [stock]);
+
+  const guardarStockMinimo = async (id_producto) => {
     setLoading(true);
     try {
       await actualizarStockMinimo(token, id_producto, {
@@ -442,7 +524,7 @@ const TablaStock = ({ stock, isDark, token, onRecargar }) => {
       {stock.length === 0 ? (
         <p className={styles.empty}>No hay datos de stock</p>
       ) : (
-        stock.map((s) => (
+        stockPaginado.map((s) => (
           <div key={s.id_producto}>
             <div
               onClick={() => {
@@ -529,7 +611,7 @@ const TablaStock = ({ stock, isDark, token, onRecargar }) => {
                       disabled={loading}
                       onClick={(e) => {
                         e.stopPropagation();
-                        actualizarStockMinimo(s.id_producto);
+                        guardarStockMinimo(s.id_producto);
                       }}
                     >
                       {loading ? "Guardando..." : "Actualizar"}
@@ -543,9 +625,55 @@ const TablaStock = ({ stock, isDark, token, onRecargar }) => {
       )}
       <div className={styles.tablaFooter}>
         <span className={styles.total}>{stock.length} productos</span>
+        {totalPaginas > 1 && (
+          <div className={styles.paginacion}>
+            <button
+              className={styles.paginaBtn}
+              onClick={() => setPagina((p) => Math.max(1, p - 1))}
+              disabled={pagina === 1}
+            >
+              ‹
+            </button>
+            <div className={styles.paginacionNumeros}>
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                .filter((p) => {
+                  if (p === 1 || p === totalPaginas) return true;
+                  if (pagina <= 3) return p <= 5;
+                  if (pagina >= totalPaginas - 2) return p >= totalPaginas - 4;
+                  return Math.abs(p - pagina) <= 2;
+                })
+                .reduce((acc, p, i, arr) => {
+                  if (i > 0 && arr[i - 1] !== p - 1) acc.push("...");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, i) =>
+                  p === "..." ? (
+                    <span key={`dots-${i}`} className={styles.paginaDots}>
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      className={`${styles.paginaBtn} ${pagina === p ? styles.paginaBtnActiva : ""}`}
+                      onClick={() => setPagina(p)}
+                    >
+                      {p}
+                    </button>
+                  ),
+                )}
+            </div>
+            <button
+              className={styles.paginaBtn}
+              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+              disabled={pagina === totalPaginas}
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
 export default InventarioPage;

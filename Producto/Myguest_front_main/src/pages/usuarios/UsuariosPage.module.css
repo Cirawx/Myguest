@@ -296,6 +296,10 @@
   background-color: #1f2937 !important;
 }
 
+.tablaRowActiveLigth {
+  background-color: #f3f4f6 !important;
+}
+
 .chevron {
   font-size: 20px;
   color: #6b7280;
@@ -359,7 +363,14 @@
 .acordeonValue {
   font-size: 14px;
   font-weight: 500;
+}
+
+.acordeonValueDark {
   color: #ffffff;
+}
+
+.acordeonValueLight {
+  color: #111827;
 }
 
 .acordeonAcciones {

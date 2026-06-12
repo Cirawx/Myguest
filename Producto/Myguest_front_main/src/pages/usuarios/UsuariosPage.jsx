@@ -165,7 +165,7 @@ const UsuariosPage = () => {
                 {/* Fila principal */}
                 <div
                   onClick={() => toggleExpandido(usuario.id_usuario)}
-                  className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight} ${expandido === usuario.id_usuario ? styles.tablaRowActive : ""}`}
+                  className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight} ${expandido === usuario.id_usuario ? isDark ? styles.tablaRowActive : styles.tablaRowActiveLight : ""}`}
                 >
                   <div className={styles.usuarioInfo}>
                     <div

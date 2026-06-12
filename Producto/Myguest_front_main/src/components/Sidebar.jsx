@@ -14,6 +14,7 @@ const menuItems = [
   { path: '/mermas',      label: 'Mermas',      icon: '🗑️' },
   { path: '/devoluciones', label: 'Devoluciones', icon: '↩️' },
   { path: '/reportes',    label: 'Reportes',    icon: '📈' },
+  { path: '/recetario',    label: 'Recetario',    icon: '📋' },
 ]
 
 const Sidebar = ({ isOpen, onClose }) => {

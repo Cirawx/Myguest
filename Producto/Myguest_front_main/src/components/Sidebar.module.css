@@ -130,14 +130,18 @@
   padding: 12px 20px;
   margin: 8px;
   border-radius: 8px;
-  border: none;
+  border: 1px solid #ef444455;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   color: #ef4444;
-  background-color: transparent;
+  background-color: #ef444411;
   transition: all 0.2s ease;
   width: calc(100% - 16px);
+}
+.logoutBtn:hover {
+  background-color: #ef444422;
+  border-color: #ef4444;
 }
 
 .logoutBtn:hover { background-color: #2d1b1b; }

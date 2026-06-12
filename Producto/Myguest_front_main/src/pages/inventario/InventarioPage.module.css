@@ -298,8 +298,10 @@
 
 /* Footer tabla */
 .tablaFooter {
-  padding: 12px 20px;
-  border-top: 1px solid #1f2937;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
 }
 
 .total {
@@ -692,4 +694,53 @@
     margin: 16px;
     padding: 24px;
   }
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.paginaBtn {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #374151;
+  background-color: transparent;
+  color: #9ca3af;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0 8px;
+}
+
+.paginaBtn:hover:not(:disabled) {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.paginaBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.paginaBtnActiva {
+  background-color: #22c55e !important;
+  border-color: #22c55e !important;
+  color: #ffffff !important;
+}
+
+.paginaDots {
+  color: #6b7280;
+  padding: 0 4px;
+  font-size: 13px;
+}
+
+.paginacionNumeros {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 280px;
+  justify-content: center;
 }

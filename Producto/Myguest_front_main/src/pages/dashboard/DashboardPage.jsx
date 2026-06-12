@@ -312,7 +312,14 @@ const DashboardPage = () => {
                 icon: "📈",
                 path: "/reportes",
                 descripcion: "Reportes del sistema",
-                disponible: false,
+                disponible: true,
+              },
+              {
+                label: "Recetario",
+                icon: "📋",
+                path: "/recetario",
+                descripcion: "Recetas y disponibilidad",
+                disponible: true,
               },
             ].map((modulo) => (
               <div

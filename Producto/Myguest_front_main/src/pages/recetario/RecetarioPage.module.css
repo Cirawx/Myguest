@@ -1,0 +1,442 @@
+.container {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}
+
+.dark { color: #f9fafb; }
+.light { color: #111827; }
+
+/* Layout dos paneles */
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* Panel lista */
+.panelLista {
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Panel detalle */
+.panelDetalle {
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 400px;
+}
+
+/* Cards */
+.cardDark {
+  background-color: #111827;
+  border: 1px solid #1f2937;
+}
+
+.cardLight {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+/* Filtro */
+.filtroContainer {
+  display: flex;
+  gap: 8px;
+}
+
+.filtroInput {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  font-size: 13px;
+  outline: none;
+}
+
+.inputDark {
+  background-color: #1f2937;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+.inputLight {
+  background-color: #f9fafb;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+.btnBuscar {
+  padding: 8px 12px;
+  background-color: #22c55e;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Lista recetas */
+.listaRecetas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recetaCard {
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.recetaCardDark {
+  background-color: #1f2937;
+  color: #d1d5db;
+}
+
+.recetaCardDark:hover {
+  border-color: #22c55e;
+}
+
+.recetaCardLight {
+  background-color: #f9fafb;
+  color: #374151;
+}
+
+.recetaCardLight:hover {
+  border-color: #22c55e;
+}
+
+.recetaActiva {
+  border-color: #22c55e !important;
+  background-color: #22c55e18 !important;
+}
+
+.recetaCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.recetaSigla {
+  font-size: 11px;
+  font-weight: 700;
+  color: #22c55e;
+  background-color: #22c55e18;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.recetaSemana {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.recetaTitulo {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+.recetaMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Detalle header */
+.detalleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detalleTitulo {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.detalleSubtitulo {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}
+
+.detalleDesc {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.badgeEjecutable {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Control alumnos */
+.alumnosControl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.alumnosDark {
+  background-color: #1f2937;
+}
+
+.alumnosLight {
+  background-color: #f3f4f6;
+}
+
+.alumnosLabel {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.alumnosInput {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alumnosBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #374151;
+  background-color: transparent;
+  color: #9ca3af;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.alumnosBtn:hover {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.alumnosValor {
+  font-size: 16px;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+}
+
+.btnVerificar {
+  padding: 6px 14px;
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnVerificar:hover {
+  background-color: #2563eb;
+}
+
+.btnEscalar {
+  padding: 6px 14px;
+  background-color: #8b5cf6;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnEscalar:hover {
+  background-color: #7c3aed;
+}
+
+/* Tabs detalle */
+.tabsDetalle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tabDetalle {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tabDetalleDark {
+  background-color: #1f2937;
+  color: #9ca3af;
+}
+
+.tabDetalleLight {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.tabDetalleActiva {
+  background-color: #22c55e !important;
+  color: #ffffff !important;
+}
+
+/* Tabla */
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 1px solid #374151;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #1f293733;
+}
+
+.table td.light {
+  color: #111827;
+}
+
+.table td.dark {
+  color: #f9fafb;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background-color: #ffffff08;
+}
+
+/* Costo total */
+.costoTotal {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  font-size: 14px;
+  color: #6b7280;
+  border-top: 1px solid #374151;
+  margin-top: 8px;
+}
+
+/* Escalado info */
+.escaladoInfo {
+  display: flex;
+  gap: 24px;
+  padding: 12px 16px;
+  background-color: #22c55e18;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #6b7280;
+  flex-wrap: wrap;
+}
+
+.escaladoInfo strong {
+  color: #22c55e;
+}
+
+/* Badge */
+.badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Sin selección */
+.sinSeleccion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* Estados */
+.loadingText,
+.emptyText,
+.errorText {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.errorText {
+  color: #ef4444;
+}
+
+.tdDark {
+  color: #d1d5db;
+}
+
+.tdLight {
+  color: #374151;
+}

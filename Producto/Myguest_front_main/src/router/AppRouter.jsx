@@ -11,7 +11,8 @@ import AcademicoPage from '../pages/academico/AcademicoPage'
 import ComprasPage from '../pages/compras/ComprasPage';
 import MermasPage from '../pages/mermas/MermasPage';
 import DevolucionesPage from '../pages/devoluciones/DevolucionesPage';
-
+import ReportesPage from '../pages/reportes/ReportesPage'
+import RecetarioPage from '../pages/recetario/RecetarioPage'
 
 const PrivateRoute = ({ children }) => {
   const { token } = useAuthStore()
@@ -32,7 +33,8 @@ const AppRouter = () => {
         <Route path="/facturacion" element={<PrivateRoute><FacturacionPage /></PrivateRoute>} />
         <Route path="/mermas" element={<PrivateRoute><MermasPage /></PrivateRoute>} />
         <Route path="/devoluciones" element={<PrivateRoute><DevolucionesPage /></PrivateRoute>} />
-        <Route path="/reportes" element={<PrivateRoute><EnConstruccion titulo="Reportes" /></PrivateRoute>} />
+        <Route path="/reportes" element={<PrivateRoute><ReportesPage /></PrivateRoute>} />
+        <Route path="/recetario" element={<PrivateRoute><RecetarioPage /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
