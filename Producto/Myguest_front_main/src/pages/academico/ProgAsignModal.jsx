@@ -28,7 +28,7 @@ const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
     setLoading(true)
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/prog-asign/', {
+      const response = await fetch(`${API_URL}/prog-asign/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
