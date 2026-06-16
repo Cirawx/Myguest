@@ -1,7 +1,7 @@
-from sqlalchemy import String, SmallInteger, ForeignKey
+from sqlalchemy import String, SmallInteger, ForeignKey, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import datetime
 from app.database import Base
-
 
 class Perfil(Base):
     __tablename__ = "perfil"
@@ -27,3 +27,14 @@ class Usuario(Base):
     cod_carrera: Mapped[int] = mapped_column(SmallInteger, nullable=False)
 
     perfil: Mapped["Perfil"] = relationship(back_populates="usuarios")
+    
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_token"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id_usuario: Mapped[int] = mapped_column(ForeignKey("usuario.id_usuario", ondelete="CASCADE"), nullable=False)
+    token: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    expiracion: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    usado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    usuario: Mapped["Usuario"] = relationship()
