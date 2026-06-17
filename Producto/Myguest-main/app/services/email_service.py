@@ -16,7 +16,7 @@ def enviar_email_recuperacion(email_destino: str, token: str, nombre: str):
 
     send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
         to=[{"email": email_destino, "name": nombre}],
-        sender={"name": "MyGuest", "email": "af026a001@smtp-brevo.com"},
+        sender={"name": "MyGuest", "email": "cl.molina@duocuc.cl"},
         subject="Recuperacion de contrasena - MyGuest",
         html_content=f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
