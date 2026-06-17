@@ -1,18 +1,24 @@
-import resend
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 from app.config import get_settings
 
 settings = get_settings()
 
-resend.api_key = settings.resend_api_key
-
-async def enviar_email_recuperacion(email_destino: str, token: str, nombre: str):
+def enviar_email_recuperacion(email_destino: str, token: str, nombre: str):
     link = f"{settings.frontend_url}/reset-password?token={token}"
 
-    resend.Emails.send({
-        "from": "MyGuest <onboarding@resend.dev>",
-        "to": email_destino,
-        "subject": "Recuperacion de contrasena - MyGuest",
-        "html": f"""
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = settings.brevo_api_key
+
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+        sib_api_v3_sdk.ApiClient(configuration)
+    )
+
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": email_destino, "name": nombre}],
+        sender={"name": "MyGuest", "email": "af026a001@smtp-brevo.com"},
+        subject="Recuperacion de contrasena - MyGuest",
+        html_content=f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #00529B;">MyGuest - Recuperacion de contrasena</h2>
             <p>Hola <strong>{nombre}</strong>,</p>
@@ -33,4 +39,9 @@ async def enviar_email_recuperacion(email_destino: str, token: str, nombre: str)
             <p style="color: #666;">Si no solicitaste esto, ignora este correo.</p>
         </div>
         """
-    })
+    )
+
+    try:
+        api_instance.send_transac_email(send_smtp_email)
+    except ApiException as e:
+        print(f"Error al enviar email: {e}")

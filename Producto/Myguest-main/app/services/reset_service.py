@@ -25,7 +25,7 @@ async def solicitar_reset(db: AsyncSession, login: str):
     db.add(reset_token)
     await db.commit()
 
-    await enviar_email_recuperacion(usuario.login, token, usuario.nom)
+    enviar_email_recuperacion(usuario.login, token, usuario.nom)
 
 
 async def confirmar_reset(db: AsyncSession, token: str, nueva_password: str):

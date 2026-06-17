@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_name: str = "Sistema Gastronomia"
 
-    resend_api_key: Optional[str] = None
+    brevo_api_key: Optional[str] = None
     frontend_url: str = "http://localhost:5173"
 
     class Config:
