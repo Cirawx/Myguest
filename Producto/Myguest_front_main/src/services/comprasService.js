@@ -57,3 +57,10 @@ export const eliminarOrdenCompra = async (token, id) => {
   if (!res.ok) throw new Error('Error al eliminar la orden');
   return true;
 };
+export const getProductos = async (token) => {
+  const res = await fetch(`${API_URL}/productos/`, {
+    headers: getHeaders(token),
+  });
+  if (!res.ok) throw new Error('Error al obtener productos');
+  return res.json();
+};
