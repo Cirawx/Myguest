@@ -56,5 +56,5 @@ async def delete_usuario(db: AsyncSession, id_usuario: int):
         await db.rollback()
         raise HTTPException(
             status_code=400,
-            detail="No se puede eliminar el usuario porque tiene programaciones de taller asociadas"
+            detail="No se puede eliminar este usuario porque tiene talleres asociados. Por favor, retirelo de los talleres primero."
         )
