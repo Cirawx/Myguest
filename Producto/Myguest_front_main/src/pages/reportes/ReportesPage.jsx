@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import * as XLSX from 'xlsx'
 import MainLayout from '../../layouts/MainLayout'
 import useThemeStore from '../../store/themeStore'
 import useAuthStore from '../../store/authStore'
@@ -36,19 +37,78 @@ const ReportesPage = () => {
   }, [])
 
   const tabs = [
-    { key: 'stock', label: '📦 Stock' },
-    { key: 'consumo', label: '🍽️ Consumo' },
+    { key: 'stock',    label: '📦 Stock' },
+    { key: 'consumo',  label: '🍽️ Consumo' },
     { key: 'facturas', label: '📄 Facturas' },
-    { key: 'mermas', label: '🗑️ Mermas y Devoluciones' },
-    { key: 'costos', label: '💰 Costos por Asignatura' },
+    { key: 'mermas',   label: '🗑️ Mermas y Devoluciones' },
+    { key: 'costos',   label: '💰 Costos por Asignatura' },
   ]
 
   const estadoColor = (estado) => {
-    if (estado === 'Sin stock') return '#ef4444'
+    if (estado === 'Sin stock')     return '#ef4444'
     if (estado === 'Stock crítico') return '#ef4444'
-    if (estado === 'Stock bajo') return '#f59e0b'
+    if (estado === 'Stock bajo')    return '#f59e0b'
     return '#22c55e'
   }
+
+  // ── Exportar Excel ──────────────────────────────────────
+  const exportarExcel = (datos, nombreArchivo, columnas) => {
+    const hoja = XLSX.utils.json_to_sheet(datos.map(item => {
+      const fila = {}
+      columnas.forEach(col => { fila[col.titulo] = item[col.campo] })
+      return fila
+    }))
+    const libro = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(libro, hoja, 'Reporte')
+    XLSX.writeFile(libro, `${nombreArchivo}_${filtros.ano_academ}.xlsx`)
+  }
+
+  const exportarStock = () => exportarExcel(data.stock, 'reporte_stock', [
+    { titulo: 'Producto',      campo: 'nom_producto' },
+    { titulo: 'Categoría',     campo: 'nom_categ_producto' },
+    { titulo: 'Unidad',        campo: 'nom_unidad_medida' },
+    { titulo: 'Stock actual',  campo: 'stock_actual' },
+    { titulo: 'Stock mínimo',  campo: 'stock_minimo' },
+    { titulo: 'Diferencia',    campo: 'diferencia' },
+    { titulo: 'Estado',        campo: 'estado' },
+  ])
+
+  const exportarConsumo = () => exportarExcel(data.consumo, 'reporte_consumo', [
+    { titulo: 'Sigla',        campo: 'sigla' },
+    { titulo: 'Asignatura',   campo: 'nom_asign' },
+    { titulo: 'Taller',       campo: 'titulo_preparacion' },
+    { titulo: 'Fecha',        campo: 'fecha' },
+    { titulo: 'Producto',     campo: 'nom_producto' },
+    { titulo: 'Cantidad',     campo: 'cantidad' },
+    { titulo: 'Precio unit.', campo: 'precio_unitario' },
+    { titulo: 'Costo total',  campo: 'costo_total' },
+  ])
+
+  const exportarFacturas = () => exportarExcel(data.facturas, 'reporte_facturas', [
+    { titulo: 'N° Documento',  campo: 'num_documento' },
+    { titulo: 'Fecha emisión', campo: 'fecha_emision' },
+    { titulo: 'Proveedor',     campo: 'nom_proveedor' },
+    { titulo: 'Estado',        campo: 'estado_conciliacion' },
+    { titulo: 'Productos',     campo: 'total_productos' },
+    { titulo: 'Monto total',   campo: 'monto_total' },
+  ])
+
+  const exportarMermas = () => exportarExcel(data.mermas_devoluciones, 'reporte_mermas', [
+    { titulo: 'Tipo',      campo: 'tipo' },
+    { titulo: 'Fecha',     campo: 'fecha' },
+    { titulo: 'Producto',  campo: 'nom_producto' },
+    { titulo: 'Cantidad',  campo: 'cantidad' },
+    { titulo: 'Motivo',    campo: 'motivo' },
+    { titulo: 'Usuario',   campo: 'nom_usuario' },
+  ])
+
+  const exportarCostos = () => exportarExcel(data.costos_asignatura, 'reporte_costos', [
+    { titulo: 'Sigla',                 campo: 'sigla' },
+    { titulo: 'Asignatura',            campo: 'nom_asign' },
+    { titulo: 'N° Talleres',           campo: 'num_talleres' },
+    { titulo: 'Costo total',           campo: 'costo_total' },
+    { titulo: 'Costo promedio/taller', campo: 'costo_promedio_taller' },
+  ])
 
   return (
     <MainLayout>
@@ -133,9 +193,14 @@ const ReportesPage = () => {
             {/* Tab Stock */}
             {tabActiva === 'stock' && (
               <div>
-                <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
-                  📦 Estado de Stock — {data.stock.length} productos
-                </h2>
+                <div className={styles.tabHeader}>
+                  <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
+                    📦 Estado de Stock — {data.stock.length} productos
+                  </h2>
+                  <button className={styles.btnExportar} onClick={exportarStock}>
+                    ⬇️ Descargar Excel
+                  </button>
+                </div>
                 <div className={styles.tableWrapper}>
                   <table className={styles.table}>
                     <thead>
@@ -159,7 +224,11 @@ const ReportesPage = () => {
                           <td>{item.stock_minimo}</td>
                           <td>{item.diferencia}</td>
                           <td>
-                            <span className={styles.badge} style={{ backgroundColor: estadoColor(item.estado) + '22', color: estadoColor(item.estado), border: `1px solid ${estadoColor(item.estado)}` }}>
+                            <span className={styles.badge} style={{
+                              backgroundColor: estadoColor(item.estado) + '22',
+                              color: estadoColor(item.estado),
+                              border: `1px solid ${estadoColor(item.estado)}`
+                            }}>
                               {item.estado}
                             </span>
                           </td>
@@ -174,9 +243,14 @@ const ReportesPage = () => {
             {/* Tab Consumo */}
             {tabActiva === 'consumo' && (
               <div>
-                <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
-                  🍽️ Consumo por Taller — {data.consumo.length} registros
-                </h2>
+                <div className={styles.tabHeader}>
+                  <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
+                    🍽️ Consumo por Taller — {data.consumo.length} registros
+                  </h2>
+                  <button className={styles.btnExportar} onClick={exportarConsumo}>
+                    ⬇️ Descargar Excel
+                  </button>
+                </div>
                 <div className={styles.tableWrapper}>
                   <table className={styles.table}>
                     <thead>
@@ -213,9 +287,14 @@ const ReportesPage = () => {
             {/* Tab Facturas */}
             {tabActiva === 'facturas' && (
               <div>
-                <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
-                  📄 Facturas — {data.facturas.length} documentos
-                </h2>
+                <div className={styles.tabHeader}>
+                  <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
+                    📄 Facturas — {data.facturas.length} documentos
+                  </h2>
+                  <button className={styles.btnExportar} onClick={exportarFacturas} disabled={data.facturas.length === 0}>
+                    ⬇️ Descargar Excel
+                  </button>
+                </div>
                 <div className={styles.tableWrapper}>
                   <table className={styles.table}>
                     <thead>
@@ -229,16 +308,20 @@ const ReportesPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.facturas.map(item => (
-                        <tr key={item.id_factura}>
-                          <td>{item.num_documento}</td>
-                          <td>{item.fecha_emision}</td>
-                          <td>{item.nom_proveedor}</td>
-                          <td>{item.estado_conciliacion}</td>
-                          <td>{item.total_productos}</td>
-                          <td>${item.monto_total.toLocaleString('es-CL')}</td>
-                        </tr>
-                      ))}
+                      {data.facturas.length === 0 ? (
+                        <tr><td colSpan="6" style={{ textAlign: 'center', color: '#6b7280', padding: '32px' }}>No hay facturas para los filtros seleccionados</td></tr>
+                      ) : (
+                        data.facturas.map(item => (
+                          <tr key={item.id_factura}>
+                            <td>{item.num_documento}</td>
+                            <td>{item.fecha_emision}</td>
+                            <td>{item.nom_proveedor}</td>
+                            <td>{item.estado_conciliacion}</td>
+                            <td>{item.total_productos}</td>
+                            <td>${item.monto_total.toLocaleString('es-CL')}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -248,9 +331,14 @@ const ReportesPage = () => {
             {/* Tab Mermas y Devoluciones */}
             {tabActiva === 'mermas' && (
               <div>
-                <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
-                  🗑️ Mermas y Devoluciones — {data.mermas_devoluciones.length} registros
-                </h2>
+                <div className={styles.tabHeader}>
+                  <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
+                    🗑️ Mermas y Devoluciones — {data.mermas_devoluciones.length} registros
+                  </h2>
+                  <button className={styles.btnExportar} onClick={exportarMermas}>
+                    ⬇️ Descargar Excel
+                  </button>
+                </div>
                 <div className={styles.tableWrapper}>
                   <table className={styles.table}>
                     <thead>
@@ -291,9 +379,14 @@ const ReportesPage = () => {
             {/* Tab Costos por Asignatura */}
             {tabActiva === 'costos' && (
               <div>
-                <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
-                  💰 Costos por Asignatura — {data.costos_asignatura.length} asignaturas
-                </h2>
+                <div className={styles.tabHeader}>
+                  <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
+                    💰 Costos por Asignatura — {data.costos_asignatura.length} asignaturas
+                  </h2>
+                  <button className={styles.btnExportar} onClick={exportarCostos}>
+                    ⬇️ Descargar Excel
+                  </button>
+                </div>
                 <div className={styles.tableWrapper}>
                   <table className={styles.table}>
                     <thead>
