@@ -1,75 +1,65 @@
-import { useState } from 'react'
-import useThemeStore from '../../store/themeStore'
-import useAuthStore from '../../store/authStore'
-import styles from './FacturaModal.module.css'
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import { useState } from "react";
+import useThemeStore from "../../store/themeStore";
+import useAuthStore from "../../store/authStore";
+import styles from "./FacturaModal.module.css";
+import { actualizarFactura } from '../../services/facturacionService'
 
 const ESTADOS = [
-  { value: 'pendiente', label: 'Pendiente' },
-  { value: 'conciliada', label: 'Conciliada' },
-  { value: 'con_diferencia', label: 'Con diferencia' },
-]
+  { value: "pendiente", label: "Pendiente" },
+  { value: "conciliada", label: "Conciliada" },
+  { value: "con_diferencia", label: "Con diferencia" },
+];
 
 const FacturaEditModal = ({ factura, onClose, onGuardado }) => {
-  const { isDark } = useThemeStore()
-  const { token } = useAuthStore()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { isDark } = useThemeStore();
+  const { token } = useAuthStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [form, setForm] = useState({
-    estado_conciliacion: factura.estado_conciliacion || 'pendiente',
-    obs: factura.obs || ''
-  })
+    estado_conciliacion: factura.estado_conciliacion || "pendiente",
+    obs: factura.obs || "",
+  });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/facturas/${factura.id_factura}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          estado_conciliacion: form.estado_conciliacion,
-          obs: form.obs || null
-        })
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Error al actualizar la factura')
-      }
-
-      onGuardado()
-      onClose()
+      await actualizarFactura(token, factura.id_factura, {
+        estado_conciliacion: form.estado_conciliacion,
+        obs: form.obs || null,
+      });
+      onGuardado();
+      onClose();
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div
         className={`${styles.modal} ${isDark ? styles.dark : styles.light}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '420px' }}
+        style={{ maxWidth: "420px" }}
       >
         <div className={styles.header}>
-          <h2 className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}>
+          <h2
+            className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}
+          >
             Editar Estado — {factura.num_documento}
           </h2>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <button className={styles.closeBtn} onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -81,8 +71,10 @@ const FacturaEditModal = ({ factura, onClose, onGuardado }) => {
               onChange={handleChange}
               className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
             >
-              {ESTADOS.map(e => (
-                <option key={e.value} value={e.value}>{e.label}</option>
+              {ESTADOS.map((e) => (
+                <option key={e.value} value={e.value}>
+                  {e.label}
+                </option>
               ))}
             </select>
           </div>
@@ -114,13 +106,13 @@ const FacturaEditModal = ({ factura, onClose, onGuardado }) => {
               disabled={loading}
               className={styles.submitBtn}
             >
-              {loading ? 'Guardando...' : 'Guardar Cambios'}
+              {loading ? "Guardando..." : "Guardar Cambios"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default FacturaEditModal
+export default FacturaEditModal;

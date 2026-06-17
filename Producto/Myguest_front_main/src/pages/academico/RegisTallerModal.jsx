@@ -2,10 +2,19 @@ import { useState, useEffect } from "react";
 import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
 import styles from "./AcademicoModal.module.css";
+import {
+  getProgTaller,
+  crearRegisTaller,
+} from "../../services/academicoService";
+import { getProductos } from "../../services/inventarioService";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-
-const RegisTallerModal = ({ periodos, usuarios, asignaturas, onClose, onGuardado }) => {
+const RegisTallerModal = ({
+  periodos,
+  usuarios,
+  asignaturas,
+  onClose,
+  onGuardado,
+}) => {
   const { isDark } = useThemeStore();
   const { token, usuario } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -42,10 +51,7 @@ const RegisTallerModal = ({ periodos, usuarios, asignaturas, onClose, onGuardado
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const res = await fetch(`${API_URL}/productos/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
+        const data = await getProductos(token);
         setProductos(data);
       } catch (err) {
         console.error("Error cargando productos:", err);
@@ -58,13 +64,10 @@ const RegisTallerModal = ({ periodos, usuarios, asignaturas, onClose, onGuardado
   const fetchAsignaturas = async (ano, periodo) => {
     if (!ano || !periodo) return;
     try {
-      const res = await fetch(
-        `${API_URL}/prog-taller/?ano_academ=${ano}&cod_periodo_academ=${periodo}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      const data = await res.json();
+      const data = await getProgTaller(token, {
+        ano_academ: ano,
+        cod_periodo_academ: periodo,
+      });
       const siglas = [...new Set(data.map((t) => t.sigla))];
       setAsignaturasDisponibles(siglas);
       setSeccionesDisponibles([]);
@@ -74,18 +77,15 @@ const RegisTallerModal = ({ periodos, usuarios, asignaturas, onClose, onGuardado
       console.error("Error:", err);
     }
   };
-
   // Paso 2: cuando cambia asignatura, cargar secciones disponibles
   const fetchSecciones = async (ano, periodo, sigla) => {
     if (!ano || !periodo || !sigla) return;
     try {
-      const res = await fetch(
-        `${API_URL}/prog-taller/?ano_academ=${ano}&cod_periodo_academ=${periodo}&sigla=${sigla}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      const data = await res.json();
+      const data = await getProgTaller(token, {
+        ano_academ: ano,
+        cod_periodo_academ: periodo,
+        sigla,
+      });
       const secciones = [...new Set(data.map((t) => t.seccion))];
       setSeccionesDisponibles(secciones);
       setTalleresDisponibles([]);
@@ -99,13 +99,12 @@ const RegisTallerModal = ({ periodos, usuarios, asignaturas, onClose, onGuardado
   const fetchTalleres = async (ano, periodo, sigla, seccion) => {
     if (!ano || !periodo || !sigla || !seccion) return;
     try {
-      const res = await fetch(
-        `${API_URL}/prog-taller/?ano_academ=${ano}&cod_periodo_academ=${periodo}&sigla=${sigla}&seccion=${seccion}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      const data = await res.json();
+      const data = await getProgTaller(token, {
+        ano_academ: ano,
+        cod_periodo_academ: periodo,
+        sigla,
+        seccion,
+      });
       setTalleresDisponibles(data);
       setForm((f) => ({ ...f, id_taller: "" }));
       setTallerSeleccionado(null);
@@ -183,37 +182,7 @@ const RegisTallerModal = ({ periodos, usuarios, asignaturas, onClose, onGuardado
     setLoading(true);
 
     try {
-      const body = {
-        fecha: tallerSeleccionado.fecha,
-        ano_academ: parseInt(form.ano_academ),
-        cod_periodo_academ: parseInt(form.cod_periodo_academ),
-        sigla: form.sigla,
-        seccion: parseInt(form.seccion),
-        id_taller: parseInt(form.id_taller),
-        id_usuario: parseInt(form.id_usuario),
-        obs: form.obs || "Sin observaciones",
-        detalles: detalles.map((d) => ({
-          id_producto: parseInt(d.id_producto),
-          cod_agrupador: parseInt(d.cod_agrupador),
-          precio: parseInt(d.precio),
-          cantidad: parseFloat(d.cantidad),
-        })),
-      };
-
-      const response = await fetch(`${API_URL}/regis-taller/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || "Error al registrar el taller");
-      }
-
+      await crearRegisTaller(token, body);
       onGuardado();
       onClose();
     } catch (err) {

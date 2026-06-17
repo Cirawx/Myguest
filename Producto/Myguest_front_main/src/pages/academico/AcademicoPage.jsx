@@ -6,8 +6,16 @@ import styles from "./AcademicoPage.module.css";
 import ProgAsignModal from "./ProgAsignModal";
 import ProgTallerModal from "./ProgTallerModal";
 import RegisTallerModal from "./RegisTallerModal";
+import {
+  getCarreras,
+  getPeriodos,
+  getAsignaturas,
+  getProgAsign,
+  getProgTaller,
+  getRegisTaller,
+} from "../../services/academicoService";
+import { getUsuarios } from "../../services/usuariosService";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 const ITEMS_POR_PAGINA = 25;
 
 const Paginacion = ({ total, pagina, setPagina, isDark }) => {
@@ -37,7 +45,9 @@ const Paginacion = ({ total, pagina, setPagina, isDark }) => {
           }, [])
           .map((p, i) =>
             p === "..." ? (
-              <span key={`dots-${i}`} className={styles.paginaDots}>...</span>
+              <span key={`dots-${i}`} className={styles.paginaDots}>
+                ...
+              </span>
             ) : (
               <button
                 key={p}
@@ -46,7 +56,7 @@ const Paginacion = ({ total, pagina, setPagina, isDark }) => {
               >
                 {p}
               </button>
-            )
+            ),
           )}
       </div>
       <button
@@ -87,21 +97,31 @@ const AcademicoPage = () => {
   const [paginaProgTaller, setPaginaProgTaller] = useState(1);
   const [paginaRegisTaller, setPaginaRegisTaller] = useState(1);
 
-  useEffect(() => { fetchMaestros(); }, [token]);
-  useEffect(() => { fetchDatosPestana(); }, [pestana, filtroAno, filtroPeriodo, filtroSigla]);
-  useEffect(() => { setPaginaProgAsign(1); }, [progAsign]);
-  useEffect(() => { setPaginaProgTaller(1); }, [progTaller]);
-  useEffect(() => { setPaginaRegisTaller(1); }, [regisTaller]);
+  useEffect(() => {
+    fetchMaestros();
+  }, [token]);
+  useEffect(() => {
+    fetchDatosPestana();
+  }, [pestana, filtroAno, filtroPeriodo, filtroSigla]);
+  useEffect(() => {
+    setPaginaProgAsign(1);
+  }, [progAsign]);
+  useEffect(() => {
+    setPaginaProgTaller(1);
+  }, [progTaller]);
+  useEffect(() => {
+    setPaginaRegisTaller(1);
+  }, [regisTaller]);
 
   const fetchMaestros = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const [carrerasRes, periodosRes, asignaturasRes, usuariosRes] = await Promise.all([
-        fetch(`${API_URL}/carreras/`, { headers }).then((r) => r.json()),
-        fetch(`${API_URL}/periodos/`, { headers }).then((r) => r.json()),
-        fetch(`${API_URL}/asignaturas/`, { headers }).then((r) => r.json()),
-        fetch(`${API_URL}/usuarios/`, { headers }).then((r) => r.json()),
-      ]);
+      const [carrerasRes, periodosRes, asignaturasRes, usuariosRes] =
+        await Promise.all([
+          getCarreras(token),
+          getPeriodos(token),
+          getAsignaturas(token),
+          getUsuarios(token),
+        ]);
       setCarreras(carrerasRes);
       setPeriodos(periodosRes);
       setAsignaturas(asignaturasRes);
@@ -114,24 +134,25 @@ const AcademicoPage = () => {
   const fetchDatosPestana = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      let url = "";
       if (pestana === "programacion") {
-        url = `${API_URL}/prog-asign/?ano_academ=${filtroAno}`;
-        if (filtroPeriodo) url += `&cod_periodo_academ=${filtroPeriodo}`;
-        const res = await fetch(url, { headers }).then((r) => r.json());
+        const res = await getProgAsign(token, {
+          ano_academ: filtroAno,
+          cod_periodo_academ: filtroPeriodo,
+        });
         setProgAsign(res);
       } else if (pestana === "talleres") {
-        url = `${API_URL}/prog-taller/?ano_academ=${filtroAno}`;
-        if (filtroPeriodo) url += `&cod_periodo_academ=${filtroPeriodo}`;
-        if (filtroSigla) url += `&sigla=${filtroSigla}`;
-        const res = await fetch(url, { headers }).then((r) => r.json());
+        const res = await getProgTaller(token, {
+          ano_academ: filtroAno,
+          cod_periodo_academ: filtroPeriodo,
+          sigla: filtroSigla,
+        });
         setProgTaller(res);
       } else if (pestana === "registro") {
-        url = `${API_URL}/regis-taller/?ano_academ=${filtroAno}`;
-        if (filtroPeriodo) url += `&cod_periodo_academ=${filtroPeriodo}`;
-        if (filtroSigla) url += `&sigla=${filtroSigla}`;
-        const res = await fetch(url, { headers }).then((r) => r.json());
+        const res = await getRegisTaller(token, {
+          ano_academ: filtroAno,
+          cod_periodo_academ: filtroPeriodo,
+          sigla: filtroSigla,
+        });
         setRegisTaller(res);
       }
     } catch (err) {
@@ -153,8 +174,12 @@ const AcademicoPage = () => {
 
   const paginar = (arr, pagina) => {
     if (!Array.isArray(arr)) return [];
-    return arr.slice((pagina - 1) * ITEMS_POR_PAGINA, pagina * ITEMS_POR_PAGINA);
+    return arr.slice(
+      (pagina - 1) * ITEMS_POR_PAGINA,
+      pagina * ITEMS_POR_PAGINA,
+    );
   };
+
   const anos = [2023, 2024, 2025, 2026];
 
   return (
@@ -163,10 +188,14 @@ const AcademicoPage = () => {
         {/* Header */}
         <div className={styles.header}>
           <div>
-            <h1 className={`${styles.title} ${isDark ? styles.dark : styles.light}`}>
+            <h1
+              className={`${styles.title} ${isDark ? styles.dark : styles.light}`}
+            >
               Módulo Académico
             </h1>
-            <p className={styles.subtitle}>Programación y registro de talleres</p>
+            <p className={styles.subtitle}>
+              Programación y registro de talleres
+            </p>
           </div>
           <button
             className={styles.newBtn}
@@ -179,27 +208,36 @@ const AcademicoPage = () => {
             {pestana === "programacion"
               ? "+ Nueva Programación"
               : pestana === "talleres"
-              ? "+ Programar Taller"
-              : "+ Registrar Taller"}
+                ? "+ Programar Taller"
+                : "+ Registrar Taller"}
           </button>
         </div>
 
         {/* Pestañas */}
         <div className={styles.pestanas}>
           <button
-            onClick={() => { setPestana("programacion"); setExpandido(null); }}
+            onClick={() => {
+              setPestana("programacion");
+              setExpandido(null);
+            }}
             className={`${styles.pestana} ${pestana === "programacion" ? styles.pestanaActiva : isDark ? styles.pestanaDark : styles.pestanaLight}`}
           >
             📋 Programación
           </button>
           <button
-            onClick={() => { setPestana("talleres"); setExpandido(null); }}
+            onClick={() => {
+              setPestana("talleres");
+              setExpandido(null);
+            }}
             className={`${styles.pestana} ${pestana === "talleres" ? styles.pestanaActiva : isDark ? styles.pestanaDark : styles.pestanaLight}`}
           >
             🍳 Talleres
           </button>
           <button
-            onClick={() => { setPestana("registro"); setExpandido(null); }}
+            onClick={() => {
+              setPestana("registro");
+              setExpandido(null);
+            }}
             className={`${styles.pestana} ${pestana === "registro" ? styles.pestanaActiva : isDark ? styles.pestanaDark : styles.pestanaLight}`}
           >
             📝 Registro
@@ -214,9 +252,12 @@ const AcademicoPage = () => {
             className={`${styles.select} ${isDark ? styles.inputDark : styles.inputLight}`}
           >
             {anos.map((a) => (
-              <option key={a} value={a}>{a}</option>
+              <option key={a} value={a}>
+                {a}
+              </option>
             ))}
           </select>
+
           <select
             value={filtroPeriodo}
             onChange={(e) => setFiltroPeriodo(e.target.value)}
@@ -229,6 +270,7 @@ const AcademicoPage = () => {
               </option>
             ))}
           </select>
+
           {(pestana === "talleres" || pestana === "registro") && (
             <select
               value={filtroSigla}
@@ -237,7 +279,9 @@ const AcademicoPage = () => {
             >
               <option value="">Todas las asignaturas</option>
               {asignaturas.map((a) => (
-                <option key={a.sigla} value={a.sigla}>{a.nom_asign}</option>
+                <option key={a.sigla} value={a.sigla}>
+                  {a.nom_asign}
+                </option>
               ))}
             </select>
           )}
@@ -247,8 +291,12 @@ const AcademicoPage = () => {
         {loading ? (
           <div className={styles.loading}>Cargando...</div>
         ) : pestana === "programacion" ? (
-          <div className={`${styles.tabla} ${isDark ? styles.tablaDark : styles.tablaLight}`}>
-            <div className={`${styles.tablaHeader} ${isDark ? styles.tablaHeaderDark : styles.tablaHeaderLight}`}>
+          <div
+            className={`${styles.tabla} ${isDark ? styles.tablaDark : styles.tablaLight}`}
+          >
+            <div
+              className={`${styles.tablaHeader} ${isDark ? styles.tablaHeaderDark : styles.tablaHeaderLight}`}
+            >
               <span>Asignatura</span>
               <span>Año</span>
               <span>Período</span>
@@ -258,24 +306,42 @@ const AcademicoPage = () => {
               <p className={styles.empty}>No hay programaciones</p>
             ) : (
               paginar(progAsign, paginaProgAsign).map((p, i) => (
-                <div key={i} className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight}`}>
-                  <span className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}>
+                <div
+                  key={i}
+                  className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight}`}
+                >
+                  <span
+                    className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}
+                  >
                     {getNombreAsignatura(p.sigla)}
                   </span>
                   <span className={styles.cod}>{p.ano_academ}</span>
-                  <span className={styles.cod}>{getNombrePeriodo(p.cod_periodo_academ)}</span>
+                  <span className={styles.cod}>
+                    {getNombrePeriodo(p.cod_periodo_academ)}
+                  </span>
                   <span className={styles.cod}>Sección {p.seccion}</span>
                 </div>
               ))
             )}
             <div className={styles.tablaFooter}>
-              <span className={styles.total}>{progAsign.length} programaciones</span>
-              <Paginacion total={progAsign.length} pagina={paginaProgAsign} setPagina={setPaginaProgAsign} isDark={isDark} />
+              <span className={styles.total}>
+                {progAsign.length} programaciones
+              </span>
+              <Paginacion
+                total={progAsign.length}
+                pagina={paginaProgAsign}
+                setPagina={setPaginaProgAsign}
+                isDark={isDark}
+              />
             </div>
           </div>
         ) : pestana === "talleres" ? (
-          <div className={`${styles.tabla} ${isDark ? styles.tablaDark : styles.tablaLight}`}>
-            <div className={`${styles.tablaHeader} ${isDark ? styles.tablaHeaderDark : styles.tablaHeaderLight}`}>
+          <div
+            className={`${styles.tabla} ${isDark ? styles.tablaDark : styles.tablaLight}`}
+          >
+            <div
+              className={`${styles.tablaHeader} ${isDark ? styles.tablaHeaderDark : styles.tablaHeaderLight}`}
+            >
               <span>Asignatura</span>
               <span>Fecha</span>
               <span>Período</span>
@@ -285,24 +351,40 @@ const AcademicoPage = () => {
               <p className={styles.empty}>No hay talleres programados</p>
             ) : (
               paginar(progTaller, paginaProgTaller).map((t, i) => (
-                <div key={i} className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight}`}>
-                  <span className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}>
+                <div
+                  key={i}
+                  className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight}`}
+                >
+                  <span
+                    className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}
+                  >
                     {getNombreAsignatura(t.sigla)}
                   </span>
                   <span className={styles.cod}>{t.fecha}</span>
-                  <span className={styles.cod}>{getNombrePeriodo(t.cod_periodo_academ)}</span>
+                  <span className={styles.cod}>
+                    {getNombrePeriodo(t.cod_periodo_academ)}
+                  </span>
                   <span className={styles.cod}>Sección {t.seccion}</span>
                 </div>
               ))
             )}
             <div className={styles.tablaFooter}>
               <span className={styles.total}>{progTaller.length} talleres</span>
-              <Paginacion total={progTaller.length} pagina={paginaProgTaller} setPagina={setPaginaProgTaller} isDark={isDark} />
+              <Paginacion
+                total={progTaller.length}
+                pagina={paginaProgTaller}
+                setPagina={setPaginaProgTaller}
+                isDark={isDark}
+              />
             </div>
           </div>
         ) : (
-          <div className={`${styles.tabla} ${isDark ? styles.tablaDark : styles.tablaLight}`}>
-            <div className={`${styles.tablaHeader} ${isDark ? styles.tablaHeaderDark : styles.tablaHeaderLight}`}>
+          <div
+            className={`${styles.tabla} ${isDark ? styles.tablaDark : styles.tablaLight}`}
+          >
+            <div
+              className={`${styles.tablaHeader} ${isDark ? styles.tablaHeaderDark : styles.tablaHeaderLight}`}
+            >
               <span>Asignatura</span>
               <span>Fecha</span>
               <span>Sección</span>
@@ -312,8 +394,13 @@ const AcademicoPage = () => {
               <p className={styles.empty}>No hay registros de ejecución</p>
             ) : (
               paginar(regisTaller, paginaRegisTaller).map((r, i) => (
-                <div key={i} className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight}`}>
-                  <span className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}>
+                <div
+                  key={i}
+                  className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight}`}
+                >
+                  <span
+                    className={`${styles.nombre} ${isDark ? styles.dark : styles.light}`}
+                  >
                     {getNombreAsignatura(r.sigla)}
                   </span>
                   <span className={styles.cod}>{r.fecha}</span>
@@ -323,8 +410,15 @@ const AcademicoPage = () => {
               ))
             )}
             <div className={styles.tablaFooter}>
-              <span className={styles.total}>{regisTaller.length} registros</span>
-              <Paginacion total={regisTaller.length} pagina={paginaRegisTaller} setPagina={setPaginaRegisTaller} isDark={isDark} />
+              <span className={styles.total}>
+                {regisTaller.length} registros
+              </span>
+              <Paginacion
+                total={regisTaller.length}
+                pagina={paginaRegisTaller}
+                setPagina={setPaginaRegisTaller}
+                isDark={isDark}
+              />
             </div>
           </div>
         )}

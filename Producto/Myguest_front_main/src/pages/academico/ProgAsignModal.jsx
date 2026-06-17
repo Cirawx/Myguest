@@ -1,60 +1,46 @@
-import { useState } from 'react'
-import useThemeStore from '../../store/themeStore'
-import useAuthStore from '../../store/authStore'
-import styles from './AcademicoModal.module.css'
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import { useState } from "react";
+import useThemeStore from "../../store/themeStore";
+import useAuthStore from "../../store/authStore";
+import styles from "./AcademicoModal.module.css";
+import { crearProgAsign } from "../../services/academicoService";
 
 const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
-  const { isDark } = useThemeStore()
-  const { token } = useAuthStore()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { isDark } = useThemeStore();
+  const { token } = useAuthStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [form, setForm] = useState({
     ano_academ: new Date().getFullYear(),
-    cod_periodo_academ: '',
-    sigla: '',
-    seccion: ''
-  })
+    cod_periodo_academ: "",
+    sigla: "",
+    seccion: "",
+  });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/prog-asign/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ano_academ: parseInt(form.ano_academ),
-          cod_periodo_academ: parseInt(form.cod_periodo_academ),
-          sigla: form.sigla,
-          seccion: parseInt(form.seccion)
-        })
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Error al crear la programación')
-      }
-
-      onGuardado()
-      onClose()
+      await crearProgAsign(token, {
+        ano_academ: parseInt(form.ano_academ),
+        cod_periodo_academ: parseInt(form.cod_periodo_academ),
+        sigla: form.sigla,
+        seccion: parseInt(form.seccion),
+      });
+      onGuardado();
+      onClose();
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -63,15 +49,18 @@ const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
-          <h2 className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}>
+          <h2
+            className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}
+          >
             Nueva Programación
           </h2>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <button className={styles.closeBtn} onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.grid}>
-
             <div className={styles.field}>
               <label className={styles.label}>Año académico *</label>
               <input
@@ -94,8 +83,11 @@ const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
                 className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
               >
                 <option value="">Seleccionar período</option>
-                {periodos.map(p => (
-                  <option key={p.cod_periodo_academ} value={p.cod_periodo_academ}>
+                {periodos.map((p) => (
+                  <option
+                    key={p.cod_periodo_academ}
+                    value={p.cod_periodo_academ}
+                  >
                     {p.nom_periodo_academ}
                   </option>
                 ))}
@@ -112,7 +104,7 @@ const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
                 className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
               >
                 <option value="">Seleccionar asignatura</option>
-                {asignaturas.map(a => (
+                {asignaturas.map((a) => (
                   <option key={a.sigla} value={a.sigla}>
                     {a.nom_asign}
                   </option>
@@ -132,7 +124,6 @@ const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
                 className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
               />
             </div>
-
           </div>
 
           {error && <div className={styles.error}>{error}</div>}
@@ -150,13 +141,13 @@ const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
               disabled={loading}
               className={styles.submitBtn}
             >
-              {loading ? 'Creando...' : 'Crear Programación'}
+              {loading ? "Creando..." : "Crear Programación"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProgAsignModal
+export default ProgAsignModal;

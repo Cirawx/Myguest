@@ -5,8 +5,12 @@ import useAuthStore from "../../store/authStore";
 import styles from "./FacturacionPage.module.css";
 import FacturaModal from "./FacturaModal";
 import FacturaEditModal from "./FacturaEditModal";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import {
+  getFacturas,
+  eliminarFactura as eliminarFacturaService,
+} from "../../services/facturacionService";
+import { getProveedores } from "../../services/proveedoresService";
+import { getProductos } from "../../services/inventarioService";
 
 const ESTADOS = [
   { value: "", label: "Todos los estados" },
@@ -36,17 +40,13 @@ const FacturacionPage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      let url = `${API_URL}/facturas/?`;
-      if (filtroProveedor) url += `id_proveedor=${filtroProveedor}&`;
-      if (filtroEstado) url += `estado=${filtroEstado}`;
-
       const [facturasRes, proveedoresRes, productosRes] = await Promise.all([
-        fetch(url, { headers }).then((r) => r.json()),
-        fetch(`${API_URL}/proveedores/?todos=true`, { headers }).then((r) =>
-          r.json(),
-        ),
-        fetch(`${API_URL}/productos/`, { headers }).then((r) => r.json()),
+        getFacturas(token, {
+          id_proveedor: filtroProveedor,
+          estado: filtroEstado,
+        }),
+        getProveedores(token, true),
+        getProductos(token),
       ]);
       setFacturas(facturasRes);
       setProveedores(proveedoresRes);
@@ -59,18 +59,15 @@ const FacturacionPage = () => {
   };
 
   const eliminarFactura = async () => {
-    try {
-      await fetch(`${API_URL}/facturas/${itemEliminar.id_factura}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setItemEliminar(null);
-      setExpandido(null);
-      fetchData();
-    } catch (err) {
-      console.error("Error eliminando factura:", err);
-    }
-  };
+  try {
+    await eliminarFacturaService(token, itemEliminar.id_factura);
+    setItemEliminar(null);
+    setExpandido(null);
+    fetchData();
+  } catch (err) {
+    console.error("Error eliminando factura:", err);
+  }
+};
 
   const getNombreProveedor = (id) => {
     const p = proveedores.find((p) => p.id_proveedor === id);
