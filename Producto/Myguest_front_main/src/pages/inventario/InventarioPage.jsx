@@ -59,7 +59,15 @@ const InventarioPage = () => {
       filtroFamilia === "todas"
         ? true
         : p.cod_familia === parseInt(filtroFamilia),
-    );
+    )
+    .sort((a, b) => {
+      const busquedaLower = busqueda.toLowerCase();
+      const aEmpieza = a.nom_producto.toLowerCase().startsWith(busquedaLower);
+      const bEmpieza = b.nom_producto.toLowerCase().startsWith(busquedaLower);
+      if (aEmpieza && !bEmpieza) return -1;
+      if (!aEmpieza && bEmpieza) return 1;
+      return 0;
+    });
 
   const productosAgrupados = familias
     .map((f) => ({
@@ -70,9 +78,18 @@ const InventarioPage = () => {
     }))
     .filter((g) => g.productos.length > 0);
 
-  const stockFiltrado = stock.filter((s) =>
-    s.nom_producto.toLowerCase().includes(busqueda.toLowerCase()),
-  );
+  const stockFiltrado = stock
+  .filter((s) =>
+    s.nom_producto.toLowerCase().includes(busqueda.toLowerCase())
+  )
+  .sort((a, b) => {
+    const busquedaLower = busqueda.toLowerCase()
+    const aEmpieza = a.nom_producto.toLowerCase().startsWith(busquedaLower)
+    const bEmpieza = b.nom_producto.toLowerCase().startsWith(busquedaLower)
+    if (aEmpieza && !bEmpieza) return -1
+    if (!aEmpieza && bEmpieza) return 1
+    return 0
+  })
 
   const recargarProductos = async () => {
     try {
@@ -86,7 +103,7 @@ const InventarioPage = () => {
       console.error("Error recargando datos:", err);
     }
   };
-  
+
   return (
     <MainLayout>
       <div className={styles.container}>
