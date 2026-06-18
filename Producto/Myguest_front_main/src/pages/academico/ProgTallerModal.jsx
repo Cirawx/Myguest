@@ -2,20 +2,15 @@ import { useState, useEffect } from "react";
 import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
 import styles from "./AcademicoModal.module.css";
-import { getTalleres, crearProgTaller } from "../../services/academicoService";
+import { getTalleres, crearProgTaller, getProgAsign } from "../../services/academicoService";
 
-const ProgTallerModal = ({
-  asignaturas,
-  periodos,
-  usuarios,
-  onClose,
-  onGuardado,
-}) => {
+const ProgTallerModal = ({ asignaturas, periodos, usuarios, onClose, onGuardado }) => {
   const { isDark } = useThemeStore();
   const { token, usuario } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [talleres, setTalleres] = useState([]);
+  const [siglasDisponibles, setSiglasDisponibles] = useState([]);
 
   const [form, setForm] = useState({
     fecha: new Date().toISOString().split("T")[0],
@@ -27,9 +22,32 @@ const ProgTallerModal = ({
     id_usuario: usuario?.id_usuario || "",
   });
 
+  // Cuando cambia año o período, cargar asignaturas disponibles
+  useEffect(() => {
+    if (form.ano_academ && form.cod_periodo_academ) {
+      fetchSiglasDisponibles()
+    }
+  }, [form.ano_academ, form.cod_periodo_academ])
+
+  // Cuando cambia sigla, cargar talleres
   useEffect(() => {
     if (form.sigla) fetchTalleres();
   }, [form.sigla]);
+
+  const fetchSiglasDisponibles = async () => {
+    try {
+      const data = await getProgAsign(token, {
+        ano_academ: form.ano_academ,
+        cod_periodo_academ: form.cod_periodo_academ,
+      })
+      const siglas = [...new Set(data.map(p => p.sigla))]
+      setSiglasDisponibles(siglas)
+      setForm(f => ({ ...f, sigla: "", seccion: "", id_taller: "" }))
+      setTalleres([])
+    } catch (err) {
+      console.error("Error cargando siglas:", err)
+    }
+  }
 
   const fetchTalleres = async () => {
     try {
@@ -48,7 +66,6 @@ const ProgTallerModal = ({
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       await crearProgTaller(token, {
         fecha: form.fecha,
@@ -68,6 +85,11 @@ const ProgTallerModal = ({
     }
   };
 
+  // Secciones disponibles para la sigla seleccionada
+  const seccionesDisponibles = siglasDisponibles.length > 0 && form.sigla
+    ? [] // se cargarán dinámicamente
+    : []
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div
@@ -75,14 +97,10 @@ const ProgTallerModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
-          <h2
-            className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}
-          >
+          <h2 className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}>
             Programar Taller
           </h2>
-          <button className={styles.closeBtn} onClick={onClose}>
-            ✕
-          </button>
+          <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -122,10 +140,7 @@ const ProgTallerModal = ({
               >
                 <option value="">Seleccionar período</option>
                 {periodos.map((p) => (
-                  <option
-                    key={p.cod_periodo_academ}
-                    value={p.cod_periodo_academ}
-                  >
+                  <option key={p.cod_periodo_academ} value={p.cod_periodo_academ}>
                     {p.nom_periodo_academ}
                   </option>
                 ))}
@@ -152,14 +167,24 @@ const ProgTallerModal = ({
                 value={form.sigla}
                 onChange={handleChange}
                 required
+                disabled={!form.cod_periodo_academ || siglasDisponibles.length === 0}
                 className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
               >
-                <option value="">Seleccionar asignatura</option>
-                {asignaturas.map((a) => (
-                  <option key={a.sigla} value={a.sigla}>
-                    {a.nom_asign}
-                  </option>
-                ))}
+                <option value="">
+                  {!form.cod_periodo_academ
+                    ? "Selecciona año y período primero"
+                    : siglasDisponibles.length === 0
+                    ? "No hay asignaturas programadas"
+                    : "Seleccionar asignatura"}
+                </option>
+                {siglasDisponibles.map((sigla) => {
+                  const asig = asignaturas.find(a => a.sigla === sigla)
+                  return (
+                    <option key={sigla} value={sigla}>
+                      {asig ? asig.nom_asign : sigla}
+                    </option>
+                  )
+                })}
               </select>
             </div>
 
