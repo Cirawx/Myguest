@@ -6,13 +6,13 @@ import styles from "./InventarioPage.module.css";
 import ProductoModal from "./ProductoModal";
 import ProductoEditModal from "./ProductoEditModal";
 import {
+  CATEGORIAS,
   getNombreUnidad,
   getNombreCategoria,
 } from "../../utils/inventarioData";
 import {
   getProductos,
   getInventario,
-  getFamilias,
   eliminarProducto as eliminarProductoService,
   actualizarStockMinimo,
 } from "../../services/inventarioService";
@@ -23,10 +23,9 @@ const InventarioPage = () => {
   const [pestana, setPestana] = useState("productos");
   const [productos, setProductos] = useState([]);
   const [stock, setStock] = useState([]);
-  const [familias, setFamilias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
-  const [filtroFamilia, setFiltroFamilia] = useState("todas");
+  const [filtroCategoria, setFiltroCategoria] = useState("todas");
   const [agrupar, setAgrupar] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
 
@@ -34,14 +33,12 @@ const InventarioPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [productosRes, stockRes, familiasRes] = await Promise.all([
+        const [productosRes, stockRes] = await Promise.all([
           getProductos(token),
           getInventario(token),
-          getFamilias(token),
         ]);
         setProductos(productosRes);
         setStock(stockRes);
-        setFamilias(familiasRes);
       } catch (err) {
         console.error("Error cargando inventario:", err);
       } finally {
@@ -56,9 +53,9 @@ const InventarioPage = () => {
       p.nom_producto.toLowerCase().includes(busqueda.toLowerCase()),
     )
     .filter((p) =>
-      filtroFamilia === "todas"
+      filtroCategoria === "todas"
         ? true
-        : p.cod_familia === parseInt(filtroFamilia),
+        : p.cod_categ_producto === parseInt(filtroCategoria),
     )
     .sort((a, b) => {
       const busquedaLower = busqueda.toLowerCase();
@@ -69,27 +66,23 @@ const InventarioPage = () => {
       return 0;
     });
 
-  const productosAgrupados = familias
-    .map((f) => ({
-      familia: f,
-      productos: productosFiltrados.filter(
-        (p) => p.cod_familia === f.cod_familia,
-      ),
-    }))
-    .filter((g) => g.productos.length > 0);
+  const productosAgrupados = CATEGORIAS.map((c) => ({
+    categoria: c,
+    productos: productosFiltrados.filter((p) => p.cod_categ_producto === c.cod),
+  })).filter((g) => g.productos.length > 0);
 
   const stockFiltrado = stock
-  .filter((s) =>
-    s.nom_producto.toLowerCase().includes(busqueda.toLowerCase())
-  )
-  .sort((a, b) => {
-    const busquedaLower = busqueda.toLowerCase()
-    const aEmpieza = a.nom_producto.toLowerCase().startsWith(busquedaLower)
-    const bEmpieza = b.nom_producto.toLowerCase().startsWith(busquedaLower)
-    if (aEmpieza && !bEmpieza) return -1
-    if (!aEmpieza && bEmpieza) return 1
-    return 0
-  })
+    .filter((s) =>
+      s.nom_producto.toLowerCase().includes(busqueda.toLowerCase()),
+    )
+    .sort((a, b) => {
+      const busquedaLower = busqueda.toLowerCase();
+      const aEmpieza = a.nom_producto.toLowerCase().startsWith(busquedaLower);
+      const bEmpieza = b.nom_producto.toLowerCase().startsWith(busquedaLower);
+      if (aEmpieza && !bEmpieza) return -1;
+      if (!aEmpieza && bEmpieza) return 1;
+      return 0;
+    });
 
   const recargarProductos = async () => {
     try {
@@ -164,14 +157,14 @@ const InventarioPage = () => {
           {pestana === "productos" && (
             <div className={styles.controlesRight}>
               <select
-                value={filtroFamilia}
-                onChange={(e) => setFiltroFamilia(e.target.value)}
+                value={filtroCategoria}
+                onChange={(e) => setFiltroCategoria(e.target.value)}
                 className={`${styles.select} ${isDark ? styles.inputDark : styles.inputLight}`}
               >
-                <option value="todas">Todas las familias</option>
-                {familias.map((f) => (
-                  <option key={f.cod_familia} value={f.cod_familia}>
-                    {f.nom_familia}
+                <option value="todas">Todas las categorías</option>
+                {CATEGORIAS.map((c) => (
+                  <option key={c.cod} value={c.cod}>
+                    {c.nom}
                   </option>
                 ))}
               </select>
@@ -179,7 +172,7 @@ const InventarioPage = () => {
                 onClick={() => setAgrupar(!agrupar)}
                 className={`${styles.agruparBtn} ${agrupar ? styles.agruparBtnActivo : isDark ? styles.agruparBtnDark : styles.agruparBtnLight}`}
               >
-                {agrupar ? "📂 Agrupado" : "📁 Agrupar por familia"}
+                {agrupar ? "📂 Agrupado" : "📁 Agrupar por categoría"}
               </button>
             </div>
           )}
@@ -192,14 +185,16 @@ const InventarioPage = () => {
           agrupar ? (
             <div className={styles.grupos}>
               {productosAgrupados.length === 0 ? (
-                <p className={styles.empty}>No hay productos en esta familia</p>
+                <p className={styles.empty}>
+                  No hay productos en esta categoría
+                </p>
               ) : (
                 productosAgrupados.map((grupo) => (
-                  <div key={grupo.familia.cod_familia} className={styles.grupo}>
+                  <div key={grupo.categoria.cod} className={styles.grupo}>
                     <h3
                       className={`${styles.grupoTitulo} ${isDark ? styles.dark : styles.light}`}
                     >
-                      🏷️ {grupo.familia.nom_familia}
+                      🏷️ {grupo.categoria.nom}
                       <span className={styles.grupoBadge}>
                         {grupo.productos.length}
                       </span>
@@ -207,7 +202,6 @@ const InventarioPage = () => {
                     <TablaProductos
                       productos={grupo.productos}
                       isDark={isDark}
-                      familias={familias}
                       token={token}
                       onRecargar={recargarProductos}
                     />
@@ -219,7 +213,6 @@ const InventarioPage = () => {
             <TablaProductos
               productos={productosFiltrados}
               isDark={isDark}
-              familias={familias}
               token={token}
               onRecargar={recargarProductos}
             />
@@ -245,7 +238,7 @@ const InventarioPage = () => {
   );
 };
 
-const TablaProductos = ({ productos, isDark, familias, token, onRecargar }) => {
+const TablaProductos = ({ productos, isDark, token, onRecargar }) => {
   const [expandido, setExpandido] = useState(null);
   const [productoEliminar, setProductoEliminar] = useState(null);
   const [productoEditar, setProductoEditar] = useState(null);
@@ -360,15 +353,11 @@ const TablaProductos = ({ productos, isDark, familias, token, onRecargar }) => {
                       </span>
                     </div>
                     <div className={styles.acordeonItem}>
-                      <span className={styles.acordeonLabel}>Familia</span>
+                      <span className={styles.acordeonLabel}>Categoría</span>
                       <span
                         className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
                       >
-                        {p.cod_familia
-                          ? familias.find(
-                              (f) => f.cod_familia === p.cod_familia,
-                            )?.nom_familia || `Fam. ${p.cod_familia}`
-                          : "—"}
+                        {getNombreCategoria(p.cod_categ_producto)}
                       </span>
                     </div>
                   </div>

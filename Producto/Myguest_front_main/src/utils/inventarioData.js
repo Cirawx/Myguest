@@ -18,6 +18,7 @@ export const CATEGORIAS = [
   { cod: 7, nom: 'Vinos, licores y bebidas' },
   { cod: 8, nom: 'No alimenticios' },
   { cod: 9, nom: 'Artículos de aseo' },
+  { cod: 10, nom: 'Equipos y otros' },
 ]
 
 export const getNombreUnidad = (cod) => {
