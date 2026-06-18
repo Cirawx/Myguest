@@ -93,35 +93,49 @@ async def upload_factura(archivo: UploadFile = File(...)):
     "/extract",
     response_model=OCRExtractionResponse,
     summary="Procesar OCR sobre un archivo subido",
-    description="Descarga el archivo desde storage y lo pasa por OCR + parser.",
+    description="Descarga el archivo desde storage y lo pasa por Gemini IA (o Tesseract fallback) + parser.",
 )
 async def extract_factura(body: ExtractRequest):
-    """Procesa OCR sobre un archivo previamente subido."""
+    """Procesa el archivo previamente subido con IA o OCR."""
     try:
         datos = ingesta_service.extraer_datos(
             storage_path=body.storage_path,
             tipo_mime=body.tipo_mime,
         )
-        
-        # Adaptar dict del ocr_service al schema OCRExtractionResponse
+
+        # Mapear items del resultado al schema ItemExtraido
+        items_mapeados = []
+        for item in datos.get("items", []):
+            items_mapeados.append(ItemExtraido(
+                descripcion_raw=item.get("descripcion_raw", ""),
+                cantidad=item.get("cantidad"),
+                unidad=item.get("unidad"),
+                precio_unitario=item.get("precio_unitario"),
+                subtotal=item.get("subtotal"),
+            ))
+
+        # Calcular confianza segun la fuente
+        fuente = datos.get("fuente", "tesseract")
+        confianza = 0.95 if fuente == "gemini" else 0.6
+
         return OCRExtractionResponse(
             id_ingesta=body.storage_path.split("/")[-1].split("_")[0],
             proveedor_rut=datos.get("rut_proveedor"),
+            proveedor_razon_social=datos.get("proveedor_razon_social"),
             folio=datos.get("folio"),
             fecha_emision=datos.get("fecha_emision"),
+            subtotal=datos.get("subtotal"),
+            iva=datos.get("iva"),
             total=datos.get("total"),
-            subtotal=datos.get("monto_neto"),
-            items=[],  # Por ahora vacio, se llenara en mejora futura
+            items=items_mapeados,
             texto_crudo=datos.get("texto_crudo", ""),
-            confianza_global=0.0,
+            confianza_global=confianza,
         )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al procesar OCR: {str(e)}",
         )
-
-
 @router.get(
     "/preview",
     summary="Obtener URL firmada para preview",

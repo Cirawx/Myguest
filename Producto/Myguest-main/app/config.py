@@ -13,15 +13,15 @@ class Settings(BaseSettings):
     supabase_service_key: Optional[str] = None
     supabase_bucket: str = "facturas"
 
+    # Gemini API
+    gemini_api_key: Optional[str] = None
+
     secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
     app_env: str = "development"
     app_name: str = "Sistema Gastronomia"
-
-    brevo_api_key: Optional[str] = None
-    frontend_url: str = "http://localhost:5173"
 
     class Config:
         env_file = ".env"

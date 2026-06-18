@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
@@ -22,6 +23,7 @@ const ESTADOS = [
 const FacturacionPage = () => {
   const { isDark } = useThemeStore();
   const { token } = useAuthStore();
+  const navigate = useNavigate();
   const [facturas, setFacturas] = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,15 +61,15 @@ const FacturacionPage = () => {
   };
 
   const eliminarFactura = async () => {
-  try {
-    await eliminarFacturaService(token, itemEliminar.id_factura);
-    setItemEliminar(null);
-    setExpandido(null);
-    fetchData();
-  } catch (err) {
-    console.error("Error eliminando factura:", err);
-  }
-};
+    try {
+      await eliminarFacturaService(token, itemEliminar.id_factura);
+      setItemEliminar(null);
+      setExpandido(null);
+      fetchData();
+    } catch (err) {
+      console.error("Error eliminando factura:", err);
+    }
+  };
 
   const getNombreProveedor = (id) => {
     const p = proveedores.find((p) => p.id_proveedor === id);
@@ -100,12 +102,22 @@ const FacturacionPage = () => {
               Gestión de facturas e ingreso de mercadería
             </p>
           </div>
-          <button
-            className={styles.newBtn}
-            onClick={() => setMostrarModal(true)}
-          >
-            + Nueva Factura
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              className={styles.newBtn}
+              onClick={() => navigate('/facturacion/ingesta')}
+              style={{ background: '#2563eb' }}
+              title="Subir factura PDF/foto y extraer datos automáticamente con OCR"
+            >
+              📥 Subir con OCR
+            </button>
+            <button
+              className={styles.newBtn}
+              onClick={() => setMostrarModal(true)}
+            >
+              + Nueva Factura
+            </button>
+          </div>
         </div>
 
         {/* Filtros */}
