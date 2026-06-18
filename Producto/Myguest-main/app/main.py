@@ -46,6 +46,7 @@ from app.routers.compras_router import router as compras_router
 from app.routers.devolucion_router import router as devolucion_router
 from app.routers.recetario_router import router as recetario_router
 from app.routers.reporte_router import router as reporte_router
+from app.routers.ingesta_router import router as ingesta_router
 
 app.include_router(auth_router,        prefix="/auth",      tags=["Auth"])
 app.include_router(usuario_router,     prefix="/usuarios",  tags=["Usuarios"])
@@ -57,6 +58,7 @@ app.include_router(compras_router,     prefix="",           tags=["Compras"])
 app.include_router(devolucion_router,  prefix="",           tags=["Devoluciones y Mermas"])
 app.include_router(recetario_router,   prefix="",           tags=["Recetario"])
 app.include_router(reporte_router, prefix="", tags=["Reportes"])
+app.include_router(ingesta_router,     prefix="",           tags=["Ingesta Inteligente"])
 
 
 @app.get("/", tags=["Health"])
