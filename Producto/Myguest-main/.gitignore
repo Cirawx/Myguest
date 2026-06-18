@@ -1,9 +1,30 @@
-__pycache__/
-*.pyc
-*.pyo
+﻿# Variables de entorno (secretas)
 .env
-.venv/
+.env.local
+.env.*.local
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Entornos virtuales
 venv/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
+env/
+.venv/
+
+# Tests con datos reales
+test_factura_real.py
+test_ocr.py
+test_factura_demo.png
+DTE_*.pdf
+DTE_*.ocr.txt
+*.ocr.txt
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

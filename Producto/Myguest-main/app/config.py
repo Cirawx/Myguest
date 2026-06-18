@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+﻿from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
 
@@ -8,6 +8,10 @@ class Settings(BaseSettings):
 
     supabase_url: Optional[str] = None
     supabase_key: Optional[str] = None
+
+    # Supabase Storage para Ingesta Inteligente
+    supabase_service_key: Optional[str] = None
+    supabase_bucket: str = "facturas"
 
     secret_key: str
     algorithm: str = "HS256"
