@@ -2,8 +2,9 @@ import { useState } from 'react'
 import useThemeStore from '../../store/themeStore'
 import useAuthStore from '../../store/authStore'
 import styles from './ProductoModal.module.css'
-
 import { UNIDADES, CATEGORIAS } from '../../utils/inventarioData'
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://myguest-production-9e8f.up.railway.app'
 
 const ProductoModal = ({ onClose, onProductoCreado, familias }) => {
   const { isDark } = useThemeStore()
@@ -29,7 +30,7 @@ const ProductoModal = ({ onClose, onProductoCreado, familias }) => {
     setLoading(true)
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/productos/', {
+      const response = await fetch(`${API_URL}/productos/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

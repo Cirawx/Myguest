@@ -3,7 +3,7 @@ import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
 import styles from "./ProveedorModal.module.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || 'https://myguest-production-9e8f.up.railway.app';
 
 const ProveedorModal = ({ proveedor, onClose, onGuardado }) => {
   const { isDark } = useThemeStore();
