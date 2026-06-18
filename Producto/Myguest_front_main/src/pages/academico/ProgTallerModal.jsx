@@ -2,9 +2,19 @@ import { useState, useEffect } from "react";
 import useThemeStore from "../../store/themeStore";
 import useAuthStore from "../../store/authStore";
 import styles from "./AcademicoModal.module.css";
-import { getTalleres, crearProgTaller, getProgAsign } from "../../services/academicoService";
+import {
+  getTalleres,
+  crearProgTaller,
+  getProgAsign,
+} from "../../services/academicoService";
 
-const ProgTallerModal = ({ asignaturas, periodos, usuarios, onClose, onGuardado }) => {
+const ProgTallerModal = ({
+  asignaturas,
+  periodos,
+  usuarios,
+  onClose,
+  onGuardado,
+}) => {
   const { isDark } = useThemeStore();
   const { token, usuario } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -25,29 +35,28 @@ const ProgTallerModal = ({ asignaturas, periodos, usuarios, onClose, onGuardado 
   // Cuando cambia año o período, cargar asignaturas disponibles
   useEffect(() => {
     if (form.ano_academ && form.cod_periodo_academ) {
-      fetchSiglasDisponibles()
+      fetchSiglasDisponibles(form.ano_academ, form.cod_periodo_academ);
     }
-  }, [form.ano_academ, form.cod_periodo_academ])
+  }, [form.ano_academ, form.cod_periodo_academ]);
 
-  // Cuando cambia sigla, cargar talleres
   useEffect(() => {
     if (form.sigla) fetchTalleres();
   }, [form.sigla]);
 
-  const fetchSiglasDisponibles = async () => {
+  const fetchSiglasDisponibles = async (ano, periodo) => {
     try {
       const data = await getProgAsign(token, {
-        ano_academ: form.ano_academ,
-        cod_periodo_academ: form.cod_periodo_academ,
-      })
-      const siglas = [...new Set(data.map(p => p.sigla))]
-      setSiglasDisponibles(siglas)
-      setForm(f => ({ ...f, sigla: "", seccion: "", id_taller: "" }))
-      setTalleres([])
+        ano_academ: ano,
+        cod_periodo_academ: periodo,
+      });
+      const siglas = [...new Set(data.map((p) => p.sigla))];
+      setSiglasDisponibles(siglas);
+      setForm((f) => ({ ...f, sigla: "", seccion: "", id_taller: "" }));
+      setTalleres([]);
     } catch (err) {
-      console.error("Error cargando siglas:", err)
+      console.error("Error cargando siglas:", err);
     }
-  }
+  };
 
   const fetchTalleres = async () => {
     try {
@@ -59,7 +68,8 @@ const ProgTallerModal = ({ asignaturas, periodos, usuarios, onClose, onGuardado 
   };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -86,9 +96,10 @@ const ProgTallerModal = ({ asignaturas, periodos, usuarios, onClose, onGuardado 
   };
 
   // Secciones disponibles para la sigla seleccionada
-  const seccionesDisponibles = siglasDisponibles.length > 0 && form.sigla
-    ? [] // se cargarán dinámicamente
-    : []
+  const seccionesDisponibles =
+    siglasDisponibles.length > 0 && form.sigla
+      ? [] // se cargarán dinámicamente
+      : [];
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -97,10 +108,14 @@ const ProgTallerModal = ({ asignaturas, periodos, usuarios, onClose, onGuardado 
         onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
-          <h2 className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}>
+          <h2
+            className={`${styles.title} ${isDark ? styles.darkText : styles.lightText}`}
+          >
             Programar Taller
           </h2>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <button className={styles.closeBtn} onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -140,7 +155,10 @@ const ProgTallerModal = ({ asignaturas, periodos, usuarios, onClose, onGuardado 
               >
                 <option value="">Seleccionar período</option>
                 {periodos.map((p) => (
-                  <option key={p.cod_periodo_academ} value={p.cod_periodo_academ}>
+                  <option
+                    key={p.cod_periodo_academ}
+                    value={p.cod_periodo_academ}
+                  >
                     {p.nom_periodo_academ}
                   </option>
                 ))}
@@ -167,23 +185,25 @@ const ProgTallerModal = ({ asignaturas, periodos, usuarios, onClose, onGuardado 
                 value={form.sigla}
                 onChange={handleChange}
                 required
-                disabled={!form.cod_periodo_academ || siglasDisponibles.length === 0}
+                disabled={
+                  !form.cod_periodo_academ || siglasDisponibles.length === 0
+                }
                 className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
               >
                 <option value="">
                   {!form.cod_periodo_academ
                     ? "Selecciona año y período primero"
                     : siglasDisponibles.length === 0
-                    ? "No hay asignaturas programadas"
-                    : "Seleccionar asignatura"}
+                      ? "No hay asignaturas programadas"
+                      : "Seleccionar asignatura"}
                 </option>
                 {siglasDisponibles.map((sigla) => {
-                  const asig = asignaturas.find(a => a.sigla === sigla)
+                  const asig = asignaturas.find((a) => a.sigla === sigla);
                   return (
                     <option key={sigla} value={sigla}>
                       {asig ? asig.nom_asign : sigla}
                     </option>
-                  )
+                  );
                 })}
               </select>
             </div>
