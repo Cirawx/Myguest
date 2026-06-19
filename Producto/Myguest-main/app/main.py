@@ -57,9 +57,9 @@ app.include_router(academico_router,   prefix="",           tags=["Academico"])
 app.include_router(facturacion_router, prefix="",           tags=["Facturacion"])
 app.include_router(compras_router,     prefix="",           tags=["Compras"])
 app.include_router(devolucion_router,  prefix="",           tags=["Devoluciones"])
-app.include_router(devolucion_router,  prefix="",           tags=["Mermas"])
+app.include_router(merma_router,  prefix="",                tags=["Mermas"])
 app.include_router(recetario_router,   prefix="",           tags=["Recetario"])
-app.include_router(reporte_router, prefix="", tags=["Reportes"])
+app.include_router(reporte_router,     prefix="",           tags=["Reportes"])
 app.include_router(ingesta_router,     prefix="",           tags=["Ingesta Inteligente"])
 
 
