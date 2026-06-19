@@ -37,11 +37,12 @@ const ReportesPage = () => {
   }, [])
 
   const tabs = [
-    { key: 'stock',    label: '📦 Stock' },
-    { key: 'consumo',  label: '🍽️ Consumo' },
-    { key: 'facturas', label: '📄 Facturas' },
-    { key: 'mermas',   label: '🗑️ Mermas y Devoluciones' },
-    { key: 'costos',   label: '💰 Costos por Asignatura' },
+    { key: 'stock',        label: '📦 Stock' },
+    { key: 'consumo',      label: '🍽️ Consumo' },
+    { key: 'facturas',     label: '📄 Facturas' },
+    { key: 'mermas',       label: '🗑️ Mermas' },
+    { key: 'devoluciones', label: '↩️ Devoluciones' },
+    { key: 'costos',       label: '💰 Costos por Asignatura' },
   ]
 
   const estadoColor = (estado) => {
@@ -50,6 +51,10 @@ const ReportesPage = () => {
     if (estado === 'Stock bajo')    return '#f59e0b'
     return '#22c55e'
   }
+
+  // Separa el array combinado del backend en dos listas
+  const soloMermas = data?.mermas_devoluciones?.filter(item => item.tipo === 'Merma') || []
+  const soloDevoluciones = data?.mermas_devoluciones?.filter(item => item.tipo === 'Devolucion') || []
 
   // ── Exportar Excel ──────────────────────────────────────
   const exportarExcel = (datos, nombreArchivo, columnas) => {
@@ -93,8 +98,15 @@ const ReportesPage = () => {
     { titulo: 'Monto total',   campo: 'monto_total' },
   ])
 
-  const exportarMermas = () => exportarExcel(data.mermas_devoluciones, 'reporte_mermas', [
-    { titulo: 'Tipo',      campo: 'tipo' },
+  const exportarMermas = () => exportarExcel(soloMermas, 'reporte_mermas', [
+    { titulo: 'Fecha',     campo: 'fecha' },
+    { titulo: 'Producto',  campo: 'nom_producto' },
+    { titulo: 'Cantidad',  campo: 'cantidad' },
+    { titulo: 'Motivo',    campo: 'motivo' },
+    { titulo: 'Usuario',   campo: 'nom_usuario' },
+  ])
+
+  const exportarDevoluciones = () => exportarExcel(soloDevoluciones, 'reporte_devoluciones', [
     { titulo: 'Fecha',     campo: 'fecha' },
     { titulo: 'Producto',  campo: 'nom_producto' },
     { titulo: 'Cantidad',  campo: 'cantidad' },
@@ -328,14 +340,14 @@ const ReportesPage = () => {
               </div>
             )}
 
-            {/* Tab Mermas y Devoluciones */}
+            {/* Tab Mermas (separado de Devoluciones) */}
             {tabActiva === 'mermas' && (
               <div>
                 <div className={styles.tabHeader}>
                   <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
-                    🗑️ Mermas y Devoluciones — {data.mermas_devoluciones.length} registros
+                    🗑️ Mermas — {soloMermas.length} registros
                   </h2>
-                  <button className={styles.btnExportar} onClick={exportarMermas}>
+                  <button className={styles.btnExportar} onClick={exportarMermas} disabled={soloMermas.length === 0}>
                     ⬇️ Descargar Excel
                   </button>
                 </div>
@@ -343,7 +355,6 @@ const ReportesPage = () => {
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>Tipo</th>
                         <th>Fecha</th>
                         <th>Producto</th>
                         <th>Cantidad</th>
@@ -352,24 +363,61 @@ const ReportesPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.mermas_devoluciones.map((item, i) => (
-                        <tr key={i}>
-                          <td>
-                            <span className={styles.badge} style={{
-                              backgroundColor: item.tipo === 'Merma' ? '#ef444422' : '#22c55e22',
-                              color: item.tipo === 'Merma' ? '#ef4444' : '#22c55e',
-                              border: `1px solid ${item.tipo === 'Merma' ? '#ef4444' : '#22c55e'}`
-                            }}>
-                              {item.tipo}
-                            </span>
-                          </td>
-                          <td>{item.fecha}</td>
-                          <td>{item.nom_producto}</td>
-                          <td>{item.cantidad}</td>
-                          <td>{item.motivo}</td>
-                          <td>{item.nom_usuario}</td>
-                        </tr>
-                      ))}
+                      {soloMermas.length === 0 ? (
+                        <tr><td colSpan="5" style={{ textAlign: 'center', color: '#6b7280', padding: '32px' }}>No hay mermas para los filtros seleccionados</td></tr>
+                      ) : (
+                        soloMermas.map((item, i) => (
+                          <tr key={i}>
+                            <td>{item.fecha}</td>
+                            <td>{item.nom_producto}</td>
+                            <td>{item.cantidad}</td>
+                            <td>{item.motivo}</td>
+                            <td>{item.nom_usuario}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Tab Devoluciones (separado de Mermas) */}
+            {tabActiva === 'devoluciones' && (
+              <div>
+                <div className={styles.tabHeader}>
+                  <h2 className={`${styles.tabTitle} ${isDark ? styles.dark : styles.light}`}>
+                    ↩️ Devoluciones — {soloDevoluciones.length} registros
+                  </h2>
+                  <button className={styles.btnExportar} onClick={exportarDevoluciones} disabled={soloDevoluciones.length === 0}>
+                    ⬇️ Descargar Excel
+                  </button>
+                </div>
+                <div className={styles.tableWrapper}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Motivo</th>
+                        <th>Usuario</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {soloDevoluciones.length === 0 ? (
+                        <tr><td colSpan="5" style={{ textAlign: 'center', color: '#6b7280', padding: '32px' }}>No hay devoluciones para los filtros seleccionados</td></tr>
+                      ) : (
+                        soloDevoluciones.map((item, i) => (
+                          <tr key={i}>
+                            <td>{item.fecha}</td>
+                            <td>{item.nom_producto}</td>
+                            <td>{item.cantidad}</td>
+                            <td>{item.motivo}</td>
+                            <td>{item.nom_usuario}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
