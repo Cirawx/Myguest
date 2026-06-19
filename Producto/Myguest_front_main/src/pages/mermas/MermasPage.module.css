@@ -1,6 +1,6 @@
 /* ── Contenedor principal ── */
 .container {
-  max-width: 1200px;
+  width: 100%;
 }
 
 /* ── Header ── */

@@ -1,5 +1,5 @@
 .container {
-  max-width: 1200px;
+  width: 100%;
 }
 
 /* Header */
@@ -33,7 +33,7 @@
 .newBtn {
   padding: 10px 20px;
   background-color: #22c55e;
-  color: #ffffff;
+  color: #ffffff !important;
   border: none;
   border-radius: 8px;
   font-size: 14px;

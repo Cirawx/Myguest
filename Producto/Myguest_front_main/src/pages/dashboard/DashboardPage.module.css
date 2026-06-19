@@ -1,5 +1,5 @@
 .container {
-  max-width: 1200px;
+  width: 100%;
 }
 
 /* Header */
@@ -80,7 +80,7 @@
 
 .tarjetaLight:hover {
   border-color: #d1d5db;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .tarjetaLeft {
@@ -360,7 +360,7 @@
 
 .moduloCardLight:hover {
   border-color: #22c55e;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .moduloDeshabilitado {
@@ -402,6 +402,7 @@
   color: #6b7280;
   margin: 0;
 }
+
 /* ══════════════════════════════
    RESPONSIVO
 ══════════════════════════════ */
