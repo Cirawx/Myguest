@@ -13,6 +13,7 @@ import ReportesPage from '../pages/reportes/ReportesPage'
 import RecetarioPage from '../pages/recetario/RecetarioPage'
 import useAuthStore from '../store/authStore'
 import { tienePermiso } from '../utils/permisos'
+import IngestaFacturaPage from '../pages/facturacion/IngestaFacturaPage'
 
 const RutaProtegida = ({ children, modulo }) => {
   const { token, usuario } = useAuthStore()
@@ -35,6 +36,7 @@ const AppRouter = () => {
         <Route path="/compras" element={<RutaProtegida modulo="compras"><ComprasPage /></RutaProtegida>} />
         <Route path="/proveedores" element={<RutaProtegida modulo="proveedores"><ProveedoresPage /></RutaProtegida>} />
         <Route path="/facturacion" element={<RutaProtegida modulo="facturacion"><FacturacionPage /></RutaProtegida>} />
+        <Route path="/facturacion/ingesta" element={<RutaProtegida modulo="facturacion"><IngestaFacturaPage /></RutaProtegida>} />
         <Route path="/mermas" element={<RutaProtegida modulo="mermas"><MermasPage /></RutaProtegida>} />
         <Route path="/devoluciones" element={<RutaProtegida modulo="devoluciones"><DevolucionesPage /></RutaProtegida>} />
         <Route path="/reportes" element={<RutaProtegida modulo="reportes"><ReportesPage /></RutaProtegida>} />
