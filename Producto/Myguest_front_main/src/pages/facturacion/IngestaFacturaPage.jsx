@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import useThemeStore from "../../store/themeStore";
@@ -11,6 +11,8 @@ import {
   homologarFactura,
   commitFactura,
 } from "../../services/ingestaService";
+import { getProductos } from "../../services/inventarioService";
+import BuscadorProducto from "../../components/BuscadorProducto";
 
 const ESTADOS = {
   INICIO: "inicio", // sin archivo aun
@@ -37,6 +39,7 @@ const IngestaFacturaPage = () => {
   const [error, setError] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [mostrarDebug, setMostrarDebug] = useState(false);
+  const [productos, setProductos] = useState([]);
 
   // Datos del flujo
   const [archivo, setArchivo] = useState(null);
@@ -56,6 +59,18 @@ const IngestaFacturaPage = () => {
     items: [],
     confianza: 0,
   });
+
+  useEffect(() => {
+    const cargarProductos = async () => {
+      try {
+        const data = await getProductos(token);
+        setProductos(data);
+      } catch (err) {
+        console.error("Error cargando catálogo de productos:", err);
+      }
+    };
+    cargarProductos();
+  }, [token]);
 
   // ============================================================
   // PASO 1: SUBIR Y EXTRAER
@@ -604,32 +619,27 @@ const IngestaFacturaPage = () => {
                               }
                               className={`${styles.itemInput} ${styles.itemInputDescripcion} ${isDark ? styles.itemInputDark : ""}`}
                             />
-                            <select
-                              value={item.id_producto_seleccionado || ""}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "id_producto_seleccionado",
-                                  Number(e.target.value) || null,
-                                )
-                              }
-                              className={`${styles.itemInput} ${isDark ? styles.itemInputDark : ""}`}
-                              style={{ marginTop: "4px", width: "100%" }}
-                            >
-                              <option value="">
-                                {item.requiere_revision
-                                  ? "⚠️ Selecciona producto..."
-                                  : ""}
-                              </option>
-                              {(item.sugerencias || []).map((sug) => (
-                                <option
-                                  key={sug.id_producto}
-                                  value={sug.id_producto}
-                                >
-                                  {sug.nom_producto} ({sug.score_similitud}%)
-                                </option>
-                              ))}
-                            </select>
+                            <div style={{ marginTop: "4px" }}>
+                              <BuscadorProducto
+                                productos={productos}
+                                productoSeleccionadoId={
+                                  item.id_producto_seleccionado
+                                }
+                                onSeleccionar={(idProducto) =>
+                                  handleItemChange(
+                                    index,
+                                    "id_producto_seleccionado",
+                                    idProducto,
+                                  )
+                                }
+                                isDark={isDark}
+                                placeholder={
+                                  item.requiere_revision
+                                    ? "⚠️ Buscar producto..."
+                                    : "Buscar producto..."
+                                }
+                              />
+                            </div>
                           </td>
                           <td>
                             <input
