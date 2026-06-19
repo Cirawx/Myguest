@@ -171,17 +171,29 @@ const RegisTallerModal = ({
     ]);
   };
 
-  const eliminarDetalle = (index) => {
-    if (detalles.length === 1) return;
-    setDetalles(detalles.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
+      const body = {
+        fecha: tallerSeleccionado.fecha,
+        ano_academ: parseInt(form.ano_academ),
+        cod_periodo_academ: parseInt(form.cod_periodo_academ),
+        sigla: form.sigla,
+        seccion: parseInt(form.seccion),
+        id_taller: parseInt(form.id_taller),
+        id_usuario: parseInt(form.id_usuario),
+        obs: form.obs || "Sin observaciones",
+        detalles: detalles.map((d) => ({
+          id_producto: parseInt(d.id_producto),
+          cod_agrupador: parseInt(d.cod_agrupador),
+          precio: parseInt(d.precio),
+          cantidad: parseFloat(d.cantidad),
+        })),
+      };
+
       await crearRegisTaller(token, body);
       onGuardado();
       onClose();
@@ -273,7 +285,7 @@ const RegisTallerModal = ({
                     const asig = asignaturas.find((a) => a.sigla === sigla);
                     return (
                       <option key={sigla} value={sigla}>
-                        {asig ? asig.nom_asign : sigla}
+                        {sigla} — {asig ? asig.nom_asign : sigla}
                       </option>
                     );
                   })}

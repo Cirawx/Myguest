@@ -106,7 +106,7 @@ const ProgAsignModal = ({ asignaturas, periodos, onClose, onGuardado }) => {
                 <option value="">Seleccionar asignatura</option>
                 {asignaturas.map((a) => (
                   <option key={a.sigla} value={a.sigla}>
-                    {a.nom_asign}
+                    {a.sigla} — {a.nom_asign}
                   </option>
                 ))}
               </select>

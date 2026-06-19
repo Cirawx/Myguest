@@ -164,7 +164,7 @@ const AcademicoPage = () => {
 
   const getNombreAsignatura = (sigla) => {
     const a = asignaturas.find((a) => a.sigla === sigla);
-    return a ? a.nom_asign : sigla;
+    return a ? `${sigla} — ${a.nom_asign}` : sigla;
   };
 
   const getNombrePeriodo = (cod) => {

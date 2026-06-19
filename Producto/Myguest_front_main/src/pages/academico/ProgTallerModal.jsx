@@ -201,7 +201,7 @@ const ProgTallerModal = ({
                   const asig = asignaturas.find((a) => a.sigla === sigla);
                   return (
                     <option key={sigla} value={sigla}>
-                      {asig ? asig.nom_asign : sigla}
+                      {sigla} — {asig ? asig.nom_asign : sigla}
                     </option>
                   );
                 })}
