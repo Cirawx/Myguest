@@ -5,6 +5,8 @@ import hashlib
 import uuid
 from datetime import datetime
 from typing import Optional
+import re
+import unicodedata
 
 from supabase import create_client, Client
 
@@ -37,9 +39,12 @@ def calcular_hash(contenido: bytes) -> str:
 
 def generar_storage_path(nombre_original: str, id_ingesta: str) -> str:
     ahora = datetime.now()
-    nombre_limpio = nombre_original.replace(" ", "_").replace("\\", "_").replace("/", "_")
+    # Normalizar unicode (convierte ° é ñ etc a equivalentes ASCII)
+    nombre_normalizado = unicodedata.normalize("NFKD", nombre_original)
+    nombre_ascii = nombre_normalizado.encode("ascii", "ignore").decode("ascii")
+    # Reemplazar cualquier caracter no alfanumérico (salvo . - _) por _
+    nombre_limpio = re.sub(r"[^\w.\-]", "_", nombre_ascii)
     return f"{ahora.year}/{ahora.month:02d}/{id_ingesta}_{nombre_limpio}"
-
 
 def subir_archivo(contenido: bytes, nombre_original: str, tipo_mime: str) -> dict:
     client = get_client()
