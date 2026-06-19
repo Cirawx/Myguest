@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { tienePermiso } from "../../utils/permisos";
 
 const DashboardPage = () => {
   const { isDark } = useThemeStore();
@@ -255,6 +256,7 @@ const DashboardPage = () => {
                 descripcion: "Gestión de accesos y roles",
                 disponible: true,
                 count: data?.totalUsuarios,
+                modulo: "usuarios",
               },
               {
                 label: "Inventario",
@@ -263,6 +265,7 @@ const DashboardPage = () => {
                 descripcion: "Control de stock y productos",
                 disponible: true,
                 count: data?.totalProductos,
+                modulo: "inventario",
               },
               {
                 label: "Proveedores",
@@ -271,6 +274,7 @@ const DashboardPage = () => {
                 descripcion: "Gestión de proveedores",
                 disponible: true,
                 count: data?.totalProveedores,
+                modulo: "proveedores",
               },
               {
                 label: "Académico",
@@ -278,6 +282,7 @@ const DashboardPage = () => {
                 path: "/academico",
                 descripcion: "Programación y talleres",
                 disponible: true,
+                modulo: "academico",
               },
               {
                 label: "Facturación",
@@ -285,6 +290,7 @@ const DashboardPage = () => {
                 path: "/facturacion",
                 descripcion: "Documentos tributarios",
                 disponible: true,
+                modulo: "facturacion",
               },
               {
                 label: "Compras",
@@ -292,6 +298,7 @@ const DashboardPage = () => {
                 path: "/compras",
                 descripcion: "Órdenes y proveedores",
                 disponible: true,
+                modulo: "compras",
               },
               {
                 label: "Mermas",
@@ -299,6 +306,7 @@ const DashboardPage = () => {
                 path: "/mermas",
                 descripcion: "Control de pérdidas",
                 disponible: true,
+                modulo: "mermas",
               },
               {
                 label: "Devoluciones",
@@ -306,6 +314,7 @@ const DashboardPage = () => {
                 path: "/devoluciones",
                 descripcion: "Gestión de devoluciones",
                 disponible: true,
+                modulo: "devoluciones",
               },
               {
                 label: "Reportes",
@@ -313,6 +322,7 @@ const DashboardPage = () => {
                 path: "/reportes",
                 descripcion: "Reportes del sistema",
                 disponible: true,
+                modulo: "reportes",
               },
               {
                 label: "Recetario",
@@ -320,28 +330,33 @@ const DashboardPage = () => {
                 path: "/recetario",
                 descripcion: "Recetas y disponibilidad",
                 disponible: true,
+                modulo: "recetario",
               },
-            ].map((modulo) => (
-              <div
-                key={modulo.label}
-                onClick={() => modulo.disponible && navigate(modulo.path)}
-                className={`${styles.moduloCard} ${isDark ? styles.moduloCardDark : styles.moduloCardLight} ${!modulo.disponible ? styles.moduloDeshabilitado : ""}`}
-              >
-                {modulo.count !== undefined && modulo.disponible && (
-                  <span className={styles.moduloCount}>{modulo.count}</span>
-                )}
-                <span className={styles.moduloCardIcon}>{modulo.icon}</span>
-                <p
-                  className={`${styles.moduloCardLabel} ${isDark ? styles.dark : styles.light}`}
+            ]
+              .filter((modulo) =>
+                tienePermiso(usuario?.cod_perfil, modulo.modulo, "ver"),
+              )
+              .map((modulo) => (
+                <div
+                  key={modulo.label}
+                  onClick={() => modulo.disponible && navigate(modulo.path)}
+                  className={`${styles.moduloCard} ${isDark ? styles.moduloCardDark : styles.moduloCardLight} ${!modulo.disponible ? styles.moduloDeshabilitado : ""}`}
                 >
-                  {modulo.label}
-                </p>
-                <p className={styles.moduloCardDesc}>{modulo.descripcion}</p>
-                {!modulo.disponible && (
-                  <span className={styles.proximamente}>Próximamente</span>
-                )}
-              </div>
-            ))}
+                  {modulo.count !== undefined && modulo.disponible && (
+                    <span className={styles.moduloCount}>{modulo.count}</span>
+                  )}
+                  <span className={styles.moduloCardIcon}>{modulo.icon}</span>
+                  <p
+                    className={`${styles.moduloCardLabel} ${isDark ? styles.dark : styles.light}`}
+                  >
+                    {modulo.label}
+                  </p>
+                  <p className={styles.moduloCardDesc}>{modulo.descripcion}</p>
+                  {!modulo.disponible && (
+                    <span className={styles.proximamente}>Próximamente</span>
+                  )}
+                </div>
+              ))}
           </div>
         </div>
       </div>

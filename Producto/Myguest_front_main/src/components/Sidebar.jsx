@@ -1,20 +1,21 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import useThemeStore from '../store/themeStore'
 import useAuthStore from '../store/authStore'
+import { tienePermiso } from '../utils/permisos'
 import styles from './Sidebar.module.css'
 
 const menuItems = [
-  { path: '/dashboard',   label: 'Dashboard',   icon: '📊' },
-  { path: '/usuarios',    label: 'Usuarios',    icon: '👤' },
-  { path: '/academico',   label: 'Académico',   icon: '🎓' },
-  { path: '/inventario',  label: 'Inventario',  icon: '📦' },
-  { path: '/proveedores', label: 'Proveedores', icon: '🏭' },
-  { path: '/compras',     label: 'Compras',     icon: '🛒' },
-  { path: '/facturacion', label: 'Facturación', icon: '📄' },
-  { path: '/mermas',      label: 'Mermas',      icon: '🗑️' },
-  { path: '/devoluciones', label: 'Devoluciones', icon: '↩️' },
-  { path: '/reportes',    label: 'Reportes',    icon: '📈' },
-  { path: '/recetario',    label: 'Recetario',    icon: '📋' },
+  { path: '/dashboard',    label: 'Dashboard',    icon: '📊', modulo: 'dashboard' },
+  { path: '/usuarios',     label: 'Usuarios',     icon: '👤', modulo: 'usuarios' },
+  { path: '/academico',    label: 'Académico',    icon: '🎓', modulo: 'academico' },
+  { path: '/inventario',   label: 'Inventario',   icon: '📦', modulo: 'inventario' },
+  { path: '/proveedores',  label: 'Proveedores',  icon: '🏭', modulo: 'proveedores' },
+  { path: '/compras',      label: 'Compras',      icon: '🛒', modulo: 'compras' },
+  { path: '/facturacion',  label: 'Facturación',  icon: '📄', modulo: 'facturacion' },
+  { path: '/mermas',       label: 'Mermas',       icon: '🗑️', modulo: 'mermas' },
+  { path: '/devoluciones', label: 'Devoluciones', icon: '↩️', modulo: 'devoluciones' },
+  { path: '/reportes',     label: 'Reportes',     icon: '📈', modulo: 'reportes' },
+  { path: '/recetario',    label: 'Recetario',    icon: '📋', modulo: 'recetario' },
 ]
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -27,17 +28,17 @@ const Sidebar = ({ isOpen, onClose }) => {
     navigate('/login')
   }
 
+  const menuVisible = menuItems.filter(item =>
+    tienePermiso(usuario?.cod_perfil, item.modulo, 'ver')
+  )
+
   return (
     <>
-      {/* Overlay — aparece en tablet/móvil cuando el sidebar está abierto */}
       <div
         className={`${styles.overlay} ${!isOpen ? styles.overlayHidden : ''}`}
         onClick={onClose}
       />
-
       <aside className={`${styles.sidebar} ${isDark ? styles.dark : styles.light} ${isOpen ? styles.open : styles.closed}`}>
-
-        {/* Info usuario */}
         <div className={styles.userInfo}>
           <div className={styles.avatar}>
             {usuario?.nom?.charAt(0)}{usuario?.primer_apellido?.charAt(0)}
@@ -49,10 +50,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             </span>
           </div>
         </div>
-
-        {/* Menú */}
         <nav className={styles.nav}>
-          {menuItems.map((item) => (
+          {menuVisible.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -66,13 +65,10 @@ const Sidebar = ({ isOpen, onClose }) => {
             </NavLink>
           ))}
         </nav>
-
-        {/* Logout */}
         <button className={styles.logoutBtn} onClick={handleLogout}>
           <span>🚪</span>
           <span>Cerrar sesión</span>
         </button>
-
       </aside>
     </>
   )

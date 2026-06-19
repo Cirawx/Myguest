@@ -10,6 +10,7 @@ import {
 import MainLayout from "../../layouts/MainLayout";
 import ModalCrearMerma from "./ModalCrearMerma";
 import styles from "./MermasPage.module.css";
+import { tienePermiso } from "../../utils/permisos";
 
 const MOTIVO_CONFIG = {
   1: { label: "Vencimiento", clase: styles.badgeVencimiento },
@@ -20,7 +21,7 @@ const MOTIVO_CONFIG = {
 };
 
 export default function MermasPage() {
-  const { token } = useAuthStore();
+  const { token, usuario } = useAuthStore();
   const { isDark } = useThemeStore();
   const t = isDark ? styles.dark : styles.light;
 
@@ -292,61 +293,69 @@ export default function MermasPage() {
                       <td>{m.fecha}</td>
                       <td>{m.obs || "-"}</td>
                       <td>
-                        {confirmEliminar === m.id_merma ? (
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "6px",
-                              alignItems: "center",
-                            }}
-                          >
-                            <span
-                              style={{ fontSize: "0.75rem", color: "#ef4444" }}
-                            >
-                              ¿Eliminar?
-                            </span>
-                            <button
-                              className={styles.btnConfirmar}
+                        {tienePermiso(
+                          usuario?.cod_perfil,
+                          "mermas",
+                          "eliminar",
+                        ) &&
+                          (confirmEliminar === m.id_merma ? (
+                            <div
                               style={{
-                                padding: "4px 10px",
-                                fontSize: "0.75rem",
+                                display: "flex",
+                                gap: "6px",
+                                alignItems: "center",
                               }}
-                              onClick={() => handleEliminar(m.id_merma)}
                             >
-                              Sí
-                            </button>
+                              <span
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "#ef4444",
+                                }}
+                              >
+                                ¿Eliminar?
+                              </span>
+                              <button
+                                className={styles.btnConfirmar}
+                                style={{
+                                  padding: "4px 10px",
+                                  fontSize: "0.75rem",
+                                }}
+                                onClick={() => handleEliminar(m.id_merma)}
+                              >
+                                Sí
+                              </button>
+                              <button
+                                className={styles.btnCancelar}
+                                style={{
+                                  padding: "4px 10px",
+                                  fontSize: "0.75rem",
+                                }}
+                                onClick={() => setConfirmEliminar(null)}
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
                             <button
-                              className={styles.btnCancelar}
-                              style={{
-                                padding: "4px 10px",
-                                fontSize: "0.75rem",
-                              }}
-                              onClick={() => setConfirmEliminar(null)}
+                              className={styles.btnEliminar}
+                              onClick={() => setConfirmEliminar(m.id_merma)}
+                              title="Eliminar"
                             >
-                              No
+                              <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6m4-6v6" />
+                                <path d="M9 6V4h6v2" />
+                              </svg>
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            className={styles.btnEliminar}
-                            onClick={() => setConfirmEliminar(m.id_merma)}
-                            title="Eliminar"
-                          >
-                            <svg
-                              width="15"
-                              height="15"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6l-1 14H6L5 6" />
-                              <path d="M10 11v6m4-6v6" />
-                              <path d="M9 6V4h6v2" />
-                            </svg>
-                          </button>
-                        )}
+                          ))}
                       </td>
                     </tr>
                   );

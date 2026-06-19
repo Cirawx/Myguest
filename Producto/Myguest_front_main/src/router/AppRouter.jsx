@@ -2,22 +2,25 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from '../pages/login/LoginPage'
 import DashboardPage from '../pages/dashboard/DashboardPage'
 import UsuariosPage from '../pages/usuarios/UsuariosPage'
-import EnConstruccion from '../pages/EnConstruccion'
-import useAuthStore from '../store/authStore'
 import InventarioPage from '../pages/inventario/InventarioPage'
 import ProveedoresPage from '../pages/proveedores/ProveedoresPage'
 import FacturacionPage from '../pages/facturacion/FacturacionPage'
-import IngestaFacturaPage from '../pages/facturacion/IngestaFacturaPage'
 import AcademicoPage from '../pages/academico/AcademicoPage'
-import ComprasPage from '../pages/compras/ComprasPage';
-import MermasPage from '../pages/mermas/MermasPage';
-import DevolucionesPage from '../pages/devoluciones/DevolucionesPage';
+import ComprasPage from '../pages/compras/ComprasPage'
+import MermasPage from '../pages/mermas/MermasPage'
+import DevolucionesPage from '../pages/devoluciones/DevolucionesPage'
 import ReportesPage from '../pages/reportes/ReportesPage'
 import RecetarioPage from '../pages/recetario/RecetarioPage'
+import useAuthStore from '../store/authStore'
+import { tienePermiso } from '../utils/permisos'
 
-const PrivateRoute = ({ children }) => {
-  const { token } = useAuthStore()
-  return token ? children : <Navigate to="/login" />
+const RutaProtegida = ({ children, modulo }) => {
+  const { token, usuario } = useAuthStore()
+  if (!token) return <Navigate to="/login" />
+  if (modulo && !tienePermiso(usuario?.cod_perfil, modulo, 'ver')) {
+    return <Navigate to="/dashboard" />
+  }
+  return children
 }
 
 const AppRouter = () => {
@@ -25,18 +28,17 @@ const AppRouter = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
-        <Route path="/usuarios" element={<PrivateRoute><UsuariosPage /></PrivateRoute>} />
-        <Route path="/academico" element={<PrivateRoute><AcademicoPage /></PrivateRoute>} />
-        <Route path="/inventario" element={<PrivateRoute><InventarioPage /></PrivateRoute>} />
-        <Route path="/compras" element={<PrivateRoute><ComprasPage /></PrivateRoute>} />
-        <Route path="/proveedores" element={<PrivateRoute><ProveedoresPage /></PrivateRoute>} />
-        <Route path="/facturacion" element={<PrivateRoute><FacturacionPage /></PrivateRoute>} />
-        <Route path="/facturacion/ingesta" element={<PrivateRoute><IngestaFacturaPage /></PrivateRoute>} />
-        <Route path="/mermas" element={<PrivateRoute><MermasPage /></PrivateRoute>} />
-        <Route path="/devoluciones" element={<PrivateRoute><DevolucionesPage /></PrivateRoute>} />
-        <Route path="/reportes" element={<PrivateRoute><ReportesPage /></PrivateRoute>} />
-        <Route path="/recetario" element={<PrivateRoute><RecetarioPage /></PrivateRoute>} />
+        <Route path="/dashboard" element={<RutaProtegida modulo="dashboard"><DashboardPage /></RutaProtegida>} />
+        <Route path="/usuarios" element={<RutaProtegida modulo="usuarios"><UsuariosPage /></RutaProtegida>} />
+        <Route path="/academico" element={<RutaProtegida modulo="academico"><AcademicoPage /></RutaProtegida>} />
+        <Route path="/inventario" element={<RutaProtegida modulo="inventario"><InventarioPage /></RutaProtegida>} />
+        <Route path="/compras" element={<RutaProtegida modulo="compras"><ComprasPage /></RutaProtegida>} />
+        <Route path="/proveedores" element={<RutaProtegida modulo="proveedores"><ProveedoresPage /></RutaProtegida>} />
+        <Route path="/facturacion" element={<RutaProtegida modulo="facturacion"><FacturacionPage /></RutaProtegida>} />
+        <Route path="/mermas" element={<RutaProtegida modulo="mermas"><MermasPage /></RutaProtegida>} />
+        <Route path="/devoluciones" element={<RutaProtegida modulo="devoluciones"><DevolucionesPage /></RutaProtegida>} />
+        <Route path="/reportes" element={<RutaProtegida modulo="reportes"><ReportesPage /></RutaProtegida>} />
+        <Route path="/recetario" element={<RutaProtegida modulo="recetario"><RecetarioPage /></RutaProtegida>} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>

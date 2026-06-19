@@ -16,10 +16,11 @@ import {
   eliminarProducto as eliminarProductoService,
   actualizarStockMinimo,
 } from "../../services/inventarioService";
+import { tienePermiso } from "../../utils/permisos";
 
 const InventarioPage = () => {
   const { isDark } = useThemeStore();
-  const { token } = useAuthStore();
+  const { token, usuario } = useAuthStore();
   const [pestana, setPestana] = useState("productos");
   const [productos, setProductos] = useState([]);
   const [stock, setStock] = useState([]);
@@ -110,12 +111,14 @@ const InventarioPage = () => {
             </h1>
             <p className={styles.subtitle}>Gestión de productos y stock</p>
           </div>
-          <button
-            className={styles.newBtn}
-            onClick={() => setMostrarModal(true)}
-          >
-            + Nuevo Producto
-          </button>
+          {tienePermiso(usuario?.cod_perfil, "inventario", "crear") && (
+            <button
+              className={styles.newBtn}
+              onClick={() => setMostrarModal(true)}
+            >
+              + Nuevo Producto
+            </button>
+          )}
         </div>
 
         {/* Pestañas */}
