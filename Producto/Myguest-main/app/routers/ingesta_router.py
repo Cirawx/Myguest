@@ -20,6 +20,16 @@ from app.schemas.ingesta_schema import (
     ItemExtraido,
 )
 
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_db
+from app.dependencies import get_current_user
+from app.schemas.ingesta_schema import (
+    FacturaHomologada,
+    FacturaCommitRequest,
+    FacturaCommitResponse,
+    ItemExtraido,
+)
 router = APIRouter(
     prefix="/ingesta",
     tags=["Ingesta Inteligente"],
@@ -166,4 +176,107 @@ async def cancelar_factura(body: CancelarRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al cancelar: {str(e)}",
+        )
+
+# ============================================================
+# REQUEST BODY para homologar
+# ============================================================
+
+class HomologarRequest(BaseModel):
+    id_ingesta: str
+    proveedor_rut: str | None = None
+    proveedor_razon_social: str | None = None
+    folio: str | None = None
+    fecha_emision: str | None = None
+    subtotal: float | None = None
+    iva: float | None = None
+    total: float | None = None
+    items: list[dict] = []
+
+
+# ============================================================
+# NUEVOS ENDPOINTS
+# ============================================================
+
+@router.post(
+    "/homologar",
+    response_model=FacturaHomologada,
+    summary="Cruzar items OCR contra catálogo de productos",
+)
+async def homologar_factura(
+    body: HomologarRequest,
+    db: AsyncSession = Depends(get_db),
+    usuario=Depends(get_current_user),
+):
+    """
+    Recibe los items extraídos por OCR y busca coincidencias en el catálogo.
+    Items con score >= 80 se auto-homologan. El resto requieren selección manual.
+    """
+    try:
+        resultado = await ingesta_service.homologar_items(
+            db=db,
+            id_ingesta=body.id_ingesta,
+            proveedor_rut=body.proveedor_rut,
+            proveedor_razon_social=body.proveedor_razon_social,
+            folio=body.folio,
+            fecha_emision=body.fecha_emision,
+            subtotal=body.subtotal,
+            iva=body.iva,
+            total=body.total,
+            items_raw=body.items,
+        )
+        return resultado
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error en homologación: {str(e)}",
+        )
+
+
+@router.post(
+    "/commit",
+    response_model=FacturaCommitResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Confirmar y guardar factura en BD",
+)
+async def commit_factura(
+    body: FacturaCommitRequest,
+    db: AsyncSession = Depends(get_db),
+    usuario=Depends(get_current_user),
+):
+    """
+    Persiste la factura validada por el usuario.
+    Crea factura + detalles y dispara triggers de stock automáticamente.
+    """
+    # Validar que todos los items tienen producto asignado
+    for i, item in enumerate(body.items):
+        if not item.id_producto:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"El item #{i+1} no tiene producto asignado",
+            )
+
+    try:
+        factura = await ingesta_service.commit_factura(
+            db=db,
+            datos=body,
+            id_usuario=usuario.id_usuario,
+        )
+        return FacturaCommitResponse(
+            id_factura=factura.id_factura,
+            folio=factura.num_documento,
+            total=body.total,
+            items_creados=len(factura.detalles),
+            stock_actualizado=True,
+            mensaje="Factura registrada correctamente",
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al confirmar factura: {str(e)}",
         )
