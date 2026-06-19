@@ -382,6 +382,18 @@
 }
 
 @media (max-width: 768px) {
+  .container {
+    max-width: 100vw;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
   .statsGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .statCard  { padding: 14px; gap: 10px; }
   .statNumero{ font-size: 1.2rem; }
@@ -396,6 +408,17 @@
   .tabla td:nth-child(3),
   .tabla th:nth-child(5),
   .tabla td:nth-child(5) { display: none; }
+
+  /* Tabla scrolleable horizontalmente sin romper el layout */
+  .tablaWrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabla {
+    min-width: 500px;
+  }
 
   .modalBox { padding: 20px 16px; }
 }
