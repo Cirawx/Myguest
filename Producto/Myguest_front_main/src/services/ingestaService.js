@@ -76,3 +76,41 @@ export const cancelarIngesta = async (token, storagePath) => {
   })
   if (!res.ok) throw new Error('Error al cancelar ingesta')
 }
+
+/**
+ * Cruza los items OCR contra el catálogo de productos.
+ * @param {string} token - JWT del usuario
+ * @param {Object} datosOCR - datos extraídos por OCR + items
+ * @returns {Promise<Object>} FacturaHomologada con sugerencias por item
+ */
+export const homologarFactura = async (token, datosOCR) => {
+  const res = await fetch(`${API_URL}/ingesta/homologar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(token) },
+    body: JSON.stringify(datosOCR),
+  })
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: 'Error en homologación' }))
+    throw new Error(error.detail || 'Error en homologación')
+  }
+  return res.json()
+}
+
+/**
+ * Confirma y guarda la factura validada en BD.
+ * @param {string} token - JWT del usuario
+ * @param {Object} facturaConfirmada - FacturaCommitRequest
+ * @returns {Promise<Object>} FacturaCommitResponse con id_factura creado
+ */
+export const commitFactura = async (token, facturaConfirmada) => {
+  const res = await fetch(`${API_URL}/ingesta/commit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(token) },
+    body: JSON.stringify(facturaConfirmada),
+  })
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: 'Error al confirmar factura' }))
+    throw new Error(error.detail || 'Error al confirmar factura')
+  }
+  return res.json()
+}

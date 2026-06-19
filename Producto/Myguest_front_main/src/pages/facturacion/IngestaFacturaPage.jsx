@@ -8,17 +8,24 @@ import {
   uploadFactura,
   extractFactura,
   cancelarIngesta,
+  homologarFactura,
+  commitFactura,
 } from "../../services/ingestaService";
 
 const ESTADOS = {
-  INICIO: "inicio",        // sin archivo aun
-  SUBIENDO: "subiendo",    // upload en curso
+  INICIO: "inicio", // sin archivo aun
+  SUBIENDO: "subiendo", // upload en curso
   PROCESANDO: "procesando", // OCR en curso
-  VALIDANDO: "validando",  // mostrar split-screen
-  ENVIANDO: "enviando",    // confirmando factura
+  VALIDANDO: "validando", // mostrar split-screen
+  ENVIANDO: "enviando", // confirmando factura
 };
 
-const TIPOS_PERMITIDOS = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+const TIPOS_PERMITIDOS = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+];
 
 const IngestaFacturaPage = () => {
   const { isDark } = useThemeStore();
@@ -66,7 +73,7 @@ const IngestaFacturaPage = () => {
     }
 
     setArchivo(file);
-    setArchivoUrl(URL.createObjectURL(file)); // preview local instantáneo
+    setArchivoUrl(URL.createObjectURL(file));
 
     try {
       // Paso 1: Upload
@@ -76,24 +83,50 @@ const IngestaFacturaPage = () => {
 
       // Paso 2: OCR
       setEstado(ESTADOS.PROCESANDO);
-      const ocr = await extractFactura(token, upload.storage_path, upload.tipo_mime);
+      const ocr = await extractFactura(
+        token,
+        upload.storage_path,
+        upload.tipo_mime,
+      );
 
-      // Pasar al formulario
+      // Paso 3: Homologar items contra catálogo
+      const homologado = await homologarFactura(token, {
+        id_ingesta: upload.id_ingesta,
+        proveedor_rut: ocr.proveedor_rut || null,
+        proveedor_razon_social: ocr.proveedor_razon_social || null,
+        folio: ocr.folio || null,
+        fecha_emision: ocr.fecha_emision || null,
+        subtotal: ocr.subtotal || null,
+        iva: ocr.iva || null,
+        total: ocr.total || null,
+        items: (ocr.items || []).map((item) => ({
+          descripcion_raw: item.descripcion_raw || "",
+          cantidad: item.cantidad || null,
+          unidad: item.unidad || null,
+          precio_unitario: item.precio_unitario || null,
+          subtotal: item.subtotal || null,
+        })),
+      });
+
+      // Pasar al formulario con homologación
       setFormData({
-        proveedor_rut: ocr.proveedor_rut || "",
-        proveedor_razon_social: ocr.proveedor_razon_social || "",
-        folio: ocr.folio || "",
-        fecha_emision: ocr.fecha_emision || "",
-        subtotal: ocr.subtotal || "",
-        iva: ocr.iva || "",
-        total: ocr.total || "",
+        proveedor_rut: homologado.proveedor_rut || "",
+        proveedor_razon_social: homologado.proveedor_razon_social || "",
+        folio: homologado.folio || "",
+        fecha_emision: homologado.fecha_emision || "",
+        subtotal: homologado.subtotal || "",
+        iva: homologado.iva || "",
+        total: homologado.total || "",
         texto_crudo: ocr.texto_crudo || "",
-        items: (ocr.items || []).map(item => ({
-            descripcion: item.descripcion_raw || "",
-            cantidad: item.cantidad || "",
-            unidad: item.unidad || "",
-            precio_unitario: item.precio_unitario || "",
-            subtotal: item.subtotal || "",
+        items: (homologado.items || []).map((item) => ({
+          descripcion: item.descripcion_raw || "",
+          cantidad: item.cantidad || "",
+          unidad: item.unidad || "",
+          precio_unitario: item.precio_unitario || "",
+          subtotal: item.subtotal || "",
+          sugerencias: item.sugerencias || [],
+          id_producto_seleccionado: item.id_producto_seleccionado || null,
+          requiere_revision: item.requiere_revision ?? true,
         })),
         confianza: ocr.confianza_global || 0,
       });
@@ -163,15 +196,48 @@ const IngestaFacturaPage = () => {
     });
   };
 
-  const handleConfirmar = () => {
-    // TODO: aquí en el futuro llamaremos al endpoint /ingesta/commit
-    // para crear la factura en BD. Por ahora solo redirigimos.
-    alert(
-      "Confirmación de factura: este paso se implementará en la siguiente fase " +
-      "(crear factura en BD + asociar productos del catálogo).\n\n" +
-      "Por ahora puedes ver los datos extraídos:\n" +
-      JSON.stringify(formData, null, 2)
+  const handleConfirmar = async () => {
+    // Validar que todos los items tengan producto asignado
+    const itemsSinProducto = formData.items.filter(
+      (item) => !item.id_producto_seleccionado,
     );
+    if (itemsSinProducto.length > 0) {
+      setError(
+        `Hay ${itemsSinProducto.length} item(s) sin producto asignado. Selecciona un producto para cada uno.`,
+      );
+      return;
+    }
+
+    if (!formData.folio || !formData.fecha_emision) {
+      setError("Folio y fecha de emisión son obligatorios.");
+      return;
+    }
+
+    try {
+      setEstado(ESTADOS.ENVIANDO);
+      const resultado = await commitFactura(token, {
+        id_ingesta: ingestaData.id_ingesta,
+        id_proveedor: ingestaData.id_proveedor || 1, // TODO: resolver proveedor
+        folio: formData.folio,
+        fecha_emision: formData.fecha_emision,
+        subtotal: Number(formData.subtotal) || 0,
+        iva: Number(formData.iva) || 0,
+        total: Number(formData.total) || 0,
+        items: formData.items.map((item) => ({
+          id_producto: item.id_producto_seleccionado,
+          cantidad: Number(item.cantidad),
+          precio_unitario: Number(item.precio_unitario),
+        })),
+      });
+
+      alert(
+        `✅ Factura #${resultado.id_factura} registrada correctamente. Stock actualizado.`,
+      );
+      navigate("/facturacion");
+    } catch (err) {
+      setError(err.message || "Error al confirmar la factura");
+      setEstado(ESTADOS.VALIDANDO);
+    }
   };
 
   // ============================================================
@@ -182,38 +248,55 @@ const IngestaFacturaPage = () => {
   };
 
   const handleItemChange = (index, field, value) => {
-  setFormData((prev) => ({
-    ...prev,
-    items: prev.items.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    ),
-  }));
-};
+    setFormData((prev) => ({
+      ...prev,
+      items: prev.items.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item,
+      ),
+    }));
+  };
 
-const handleAddItem = () => {
-  setFormData((prev) => ({
-    ...prev,
-    items: [
-      ...prev.items,
-      { descripcion: "", cantidad: "", unidad: "", precio_unitario: "", subtotal: "" },
-    ],
-  }));
-};
+  const handleAddItem = () => {
+    setFormData((prev) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          descripcion: "",
+          cantidad: "",
+          unidad: "",
+          precio_unitario: "",
+          subtotal: "",
+        },
+      ],
+    }));
+  };
 
-const handleRemoveItem = (index) => {
-  setFormData((prev) => ({
-    ...prev,
-    items: prev.items.filter((_, i) => i !== index),
-  }));
-};
+  const handleRemoveItem = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index),
+    }));
+  };
 
   const stepClass = (paso) => {
     const base = `${styles.step} ${isDark ? styles.stepDark : ""}`;
-    if (estado === ESTADOS.INICIO && paso === 1) return `${base} ${isDark ? styles.stepActiveDark : styles.stepActive}`;
-    if ((estado === ESTADOS.SUBIENDO || estado === ESTADOS.PROCESANDO) && paso === 2) return `${base} ${isDark ? styles.stepActiveDark : styles.stepActive}`;
-    if (estado === ESTADOS.VALIDANDO && paso === 3) return `${base} ${isDark ? styles.stepActiveDark : styles.stepActive}`;
-    if (estado === ESTADOS.VALIDANDO && paso < 3) return `${base} ${styles.stepDone}`;
-    if ((estado === ESTADOS.SUBIENDO || estado === ESTADOS.PROCESANDO) && paso === 1) return `${base} ${styles.stepDone}`;
+    if (estado === ESTADOS.INICIO && paso === 1)
+      return `${base} ${isDark ? styles.stepActiveDark : styles.stepActive}`;
+    if (
+      (estado === ESTADOS.SUBIENDO || estado === ESTADOS.PROCESANDO) &&
+      paso === 2
+    )
+      return `${base} ${isDark ? styles.stepActiveDark : styles.stepActive}`;
+    if (estado === ESTADOS.VALIDANDO && paso === 3)
+      return `${base} ${isDark ? styles.stepActiveDark : styles.stepActive}`;
+    if (estado === ESTADOS.VALIDANDO && paso < 3)
+      return `${base} ${styles.stepDone}`;
+    if (
+      (estado === ESTADOS.SUBIENDO || estado === ESTADOS.PROCESANDO) &&
+      paso === 1
+    )
+      return `${base} ${styles.stepDone}`;
     return base;
   };
 
@@ -222,7 +305,8 @@ const handleRemoveItem = (index) => {
     if (done) return `${base} ${styles.stepNumberDone}`;
     if (
       (estado === ESTADOS.INICIO && paso === 1) ||
-      ((estado === ESTADOS.SUBIENDO || estado === ESTADOS.PROCESANDO) && paso === 2) ||
+      ((estado === ESTADOS.SUBIENDO || estado === ESTADOS.PROCESANDO) &&
+        paso === 2) ||
       (estado === ESTADOS.VALIDANDO && paso === 3)
     ) {
       return `${base} ${styles.stepNumberActive}`;
@@ -236,11 +320,14 @@ const handleRemoveItem = (index) => {
         {/* Header */}
         <div className={styles.header}>
           <div>
-            <h1 className={`${styles.title} ${isDark ? styles.dark : styles.light}`}>
+            <h1
+              className={`${styles.title} ${isDark ? styles.dark : styles.light}`}
+            >
               📥 Ingesta inteligente de facturas
             </h1>
             <p className={styles.subtitle}>
-              Sube un PDF o foto de factura y extrae automáticamente los datos con OCR
+              Sube un PDF o foto de factura y extrae automáticamente los datos
+              con OCR
             </p>
           </div>
           <button
@@ -280,7 +367,9 @@ const handleRemoveItem = (index) => {
             onDragLeave={handleDragLeave}
           >
             <div className={styles.uploadIcon}>📄</div>
-            <div className={`${styles.uploadText} ${isDark ? styles.dark : styles.light}`}>
+            <div
+              className={`${styles.uploadText} ${isDark ? styles.dark : styles.light}`}
+            >
               Arrastra el archivo aquí o haz clic para seleccionar
             </div>
             <div className={styles.uploadHint}>
@@ -310,8 +399,12 @@ const handleRemoveItem = (index) => {
         {estado === ESTADOS.VALIDANDO && (
           <div className={styles.splitScreen}>
             {/* PANEL IZQUIERDO: Preview del archivo */}
-            <div className={`${styles.panel} ${isDark ? styles.panelDark : ""}`}>
-              <h3 className={`${styles.panelTitle} ${isDark ? styles.panelTitleDark : ""} ${isDark ? styles.dark : styles.light}`}>
+            <div
+              className={`${styles.panel} ${isDark ? styles.panelDark : ""}`}
+            >
+              <h3
+                className={`${styles.panelTitle} ${isDark ? styles.panelTitleDark : ""} ${isDark ? styles.dark : styles.light}`}
+              >
                 Archivo original
               </h3>
               {archivo?.type === "application/pdf" ? (
@@ -330,15 +423,21 @@ const handleRemoveItem = (index) => {
             </div>
 
             {/* PANEL DERECHO: Formulario editable */}
-            <div className={`${styles.panel} ${isDark ? styles.panelDark : ""}`}>
-              <h3 className={`${styles.panelTitle} ${isDark ? styles.panelTitleDark : ""} ${isDark ? styles.dark : styles.light}`}>
+            <div
+              className={`${styles.panel} ${isDark ? styles.panelDark : ""}`}
+            >
+              <h3
+                className={`${styles.panelTitle} ${isDark ? styles.panelTitleDark : ""} ${isDark ? styles.dark : styles.light}`}
+              >
                 Datos extraídos
                 <span className={styles.badgeAuto}>
                   {formData.confianza >= 0.9 ? "🤖 IA" : "📄 OCR"}
                 </span>
                 <span
                   className={`${styles.confianzaBadge} ${
-                    formData.confianza >= 0.9 ? styles.confianzaAlta : styles.confianzaMedia
+                    formData.confianza >= 0.9
+                      ? styles.confianzaAlta
+                      : styles.confianzaMedia
                   }`}
                 >
                   Confianza {Math.round(formData.confianza * 100)}%
@@ -347,20 +446,26 @@ const handleRemoveItem = (index) => {
 
               <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
-                  <label className={`${styles.label} ${isDark ? styles.labelDark : ""}`}>
+                  <label
+                    className={`${styles.label} ${isDark ? styles.labelDark : ""}`}
+                  >
                     RUT proveedor
                   </label>
                   <input
                     type="text"
                     value={formData.proveedor_rut}
-                    onChange={(e) => handleChange("proveedor_rut", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("proveedor_rut", e.target.value)
+                    }
                     className={`${styles.input} ${isDark ? styles.inputDark : ""}`}
                     placeholder="12345678-9"
                   />
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={`${styles.label} ${isDark ? styles.labelDark : ""}`}>
+                  <label
+                    className={`${styles.label} ${isDark ? styles.labelDark : ""}`}
+                  >
                     Folio
                   </label>
                   <input
@@ -373,32 +478,42 @@ const handleRemoveItem = (index) => {
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
-                  <label className={`${styles.label} ${isDark ? styles.labelDark : ""}`}>
+                  <label
+                    className={`${styles.label} ${isDark ? styles.labelDark : ""}`}
+                  >
                     Razón social
                   </label>
                   <input
                     type="text"
                     value={formData.proveedor_razon_social}
-                    onChange={(e) => handleChange("proveedor_razon_social", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("proveedor_razon_social", e.target.value)
+                    }
                     className={`${styles.input} ${isDark ? styles.inputDark : ""}`}
                     placeholder="Ej. EZO HUERTO URBANO SPA"
                   />
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={`${styles.label} ${isDark ? styles.labelDark : ""}`}>
+                  <label
+                    className={`${styles.label} ${isDark ? styles.labelDark : ""}`}
+                  >
                     Fecha emisión
                   </label>
                   <input
                     type="date"
                     value={formData.fecha_emision}
-                    onChange={(e) => handleChange("fecha_emision", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("fecha_emision", e.target.value)
+                    }
                     className={`${styles.input} ${isDark ? styles.inputDark : ""}`}
                   />
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={`${styles.label} ${isDark ? styles.labelDark : ""}`}>
+                  <label
+                    className={`${styles.label} ${isDark ? styles.labelDark : ""}`}
+                  >
                     Subtotal
                   </label>
                   <input
@@ -411,7 +526,9 @@ const handleRemoveItem = (index) => {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={`${styles.label} ${isDark ? styles.labelDark : ""}`}>
+                  <label
+                    className={`${styles.label} ${isDark ? styles.labelDark : ""}`}
+                  >
                     IVA
                   </label>
                   <input
@@ -424,7 +541,9 @@ const handleRemoveItem = (index) => {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={`${styles.label} ${isDark ? styles.labelDark : ""}`}>
+                  <label
+                    className={`${styles.label} ${isDark ? styles.labelDark : ""}`}
+                  >
                     Total
                   </label>
                   <input
@@ -438,112 +557,178 @@ const handleRemoveItem = (index) => {
               </div>
 
               {/* === Tabla de items === */}
-            <div className={`${styles.itemsSection} ${isDark ? styles.itemsSectionDark : ""}`}>
-              <div className={styles.itemsSectionTitle}>
-                <span className={isDark ? styles.dark : styles.light}>
-                  🛒 Productos / Servicios
-                </span>
-                <span className={styles.itemsCount}>
-                  {formData.items.length} {formData.items.length === 1 ? "item" : "items"}
-                </span>
-              </div>
-
-              {formData.items.length === 0 ? (
-                <div className={styles.itemsEmpty}>
-                  No se detectaron items. Agrega uno manualmente abajo.
+              <div
+                className={`${styles.itemsSection} ${isDark ? styles.itemsSectionDark : ""}`}
+              >
+                <div className={styles.itemsSectionTitle}>
+                  <span className={isDark ? styles.dark : styles.light}>
+                    🛒 Productos / Servicios
+                  </span>
+                  <span className={styles.itemsCount}>
+                    {formData.items.length}{" "}
+                    {formData.items.length === 1 ? "item" : "items"}
+                  </span>
                 </div>
-              ) : (
-                <table className={`${styles.itemsTable} ${isDark ? styles.itemsTableDark : ""}`}>
-                  <thead>
-                    <tr>
-                      <th>Descripción</th>
-                      <th>Cant.</th>
-                      <th>Unidad</th>
-                      <th>Precio</th>
-                      <th>Subtotal</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {formData.items.map((item, index) => (
-                      <tr key={index}>
-                        <td>
-                          <input
-                            type="text"
-                            value={item.descripcion}
-                            onChange={(e) => handleItemChange(index, "descripcion", e.target.value)}
-                            className={`${styles.itemInput} ${styles.itemInputDescripcion} ${isDark ? styles.itemInputDark : ""}`}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={item.cantidad}
-                            onChange={(e) => handleItemChange(index, "cantidad", e.target.value)}
-                            className={`${styles.itemInput} ${styles.itemInputCantidad} ${isDark ? styles.itemInputDark : ""}`}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={item.unidad}
-                            onChange={(e) => handleItemChange(index, "unidad", e.target.value)}
-                            className={`${styles.itemInput} ${styles.itemInputUnidad} ${isDark ? styles.itemInputDark : ""}`}
-                            placeholder="UN"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            value={item.precio_unitario}
-                            onChange={(e) => handleItemChange(index, "precio_unitario", e.target.value)}
-                            className={`${styles.itemInput} ${styles.itemInputPrecio} ${isDark ? styles.itemInputDark : ""}`}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            value={item.subtotal}
-                            onChange={(e) => handleItemChange(index, "subtotal", e.target.value)}
-                            className={`${styles.itemInput} ${styles.itemInputPrecio} ${isDark ? styles.itemInputDark : ""}`}
-                          />
-                        </td>
-                        <td>
-                          <button
-                            className={styles.itemRemoveBtn}
-                            onClick={() => handleRemoveItem(index)}
-                            title="Eliminar item"
-                          >
-                            ×
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
 
-              <button className={styles.addItemBtn} onClick={handleAddItem}>
-                + Agregar item manualmente
-              </button>
-            </div>
+                {formData.items.length === 0 ? (
+                  <div className={styles.itemsEmpty}>
+                    No se detectaron items. Agrega uno manualmente abajo.
+                  </div>
+                ) : (
+                  <table
+                    className={`${styles.itemsTable} ${isDark ? styles.itemsTableDark : ""}`}
+                  >
+                    <thead>
+                      <tr>
+                        <th>Descripción</th>
+                        <th>Cant.</th>
+                        <th>Unidad</th>
+                        <th>Precio</th>
+                        <th>Subtotal</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formData.items.map((item, index) => (
+                        <tr key={index}>
+                          <td>
+                            <input
+                              type="text"
+                              value={item.descripcion}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "descripcion",
+                                  e.target.value,
+                                )
+                              }
+                              className={`${styles.itemInput} ${styles.itemInputDescripcion} ${isDark ? styles.itemInputDark : ""}`}
+                            />
+                            <select
+                              value={item.id_producto_seleccionado || ""}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "id_producto_seleccionado",
+                                  Number(e.target.value) || null,
+                                )
+                              }
+                              className={`${styles.itemInput} ${isDark ? styles.itemInputDark : ""}`}
+                              style={{ marginTop: "4px", width: "100%" }}
+                            >
+                              <option value="">
+                                {item.requiere_revision
+                                  ? "⚠️ Selecciona producto..."
+                                  : ""}
+                              </option>
+                              {(item.sugerencias || []).map((sug) => (
+                                <option
+                                  key={sug.id_producto}
+                                  value={sug.id_producto}
+                                >
+                                  {sug.nom_producto} ({sug.score_similitud}%)
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.cantidad}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "cantidad",
+                                  e.target.value,
+                                )
+                              }
+                              className={`${styles.itemInput} ${styles.itemInputCantidad} ${isDark ? styles.itemInputDark : ""}`}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={item.unidad}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "unidad",
+                                  e.target.value,
+                                )
+                              }
+                              className={`${styles.itemInput} ${styles.itemInputUnidad} ${isDark ? styles.itemInputDark : ""}`}
+                              placeholder="UN"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              value={item.precio_unitario}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "precio_unitario",
+                                  e.target.value,
+                                )
+                              }
+                              className={`${styles.itemInput} ${styles.itemInputPrecio} ${isDark ? styles.itemInputDark : ""}`}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              value={item.subtotal}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "subtotal",
+                                  e.target.value,
+                                )
+                              }
+                              className={`${styles.itemInput} ${styles.itemInputPrecio} ${isDark ? styles.itemInputDark : ""}`}
+                            />
+                          </td>
+                          <td>
+                            <button
+                              className={styles.itemRemoveBtn}
+                              onClick={() => handleRemoveItem(index)}
+                              title="Eliminar item"
+                            >
+                              ×
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+
+                <button className={styles.addItemBtn} onClick={handleAddItem}>
+                  + Agregar item manualmente
+                </button>
+              </div>
 
               {/* Debug OCR */}
               <button
                 className={styles.debugToggle}
                 onClick={() => setMostrarDebug(!mostrarDebug)}
               >
-                {mostrarDebug ? "▼ Ocultar" : "▶ Mostrar"} texto OCR crudo (debug)
+                {mostrarDebug ? "▼ Ocultar" : "▶ Mostrar"} texto OCR crudo
+                (debug)
               </button>
               {mostrarDebug && (
-                <div className={`${styles.debugSection} ${isDark ? styles.debugSectionDark : ""}`}>
+                <div
+                  className={`${styles.debugSection} ${isDark ? styles.debugSectionDark : ""}`}
+                >
                   {formData.texto_crudo || "(vacío)"}
                 </div>
               )}
 
               {/* Acciones */}
-              <div className={`${styles.actions} ${isDark ? styles.actionsDark : ""}`}>
+              <div
+                className={`${styles.actions} ${isDark ? styles.actionsDark : ""}`}
+              >
                 <button className={styles.dangerBtn} onClick={handleCancelar}>
                   Cancelar
                 </button>
@@ -557,7 +742,6 @@ const handleRemoveItem = (index) => {
       </div>
     </MainLayout>
   );
-  
 };
 
 export default IngestaFacturaPage;
