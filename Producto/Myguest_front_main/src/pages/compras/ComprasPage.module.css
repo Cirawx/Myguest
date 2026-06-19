@@ -127,7 +127,7 @@
   align-items: center;
   gap: 6px;
   background: #22c55e;
-  color: #000;
+  color: #ffffff !important;
   border: none;
   border-radius: 8px;
   padding: 9px 18px;
@@ -364,7 +364,7 @@
   border: none;
   border-radius: 8px;
   padding: 9px 20px;
-  color: #000;
+  color: #ffffff !important;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
