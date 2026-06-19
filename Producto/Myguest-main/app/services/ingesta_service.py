@@ -1,26 +1,20 @@
 """
 Servicio orquestador de Ingesta Inteligente.
-
-Coordina Supabase Storage + Gemini (IA) + OCR (Tesseract fallback)
-para implementar el flujo:
-1. upload  -> sube archivo a Supabase
-2. extract -> descarga + pasa por Gemini (o Tesseract) + retorna datos
-3. preview -> genera URL firmada para frontend
-4. cancel  -> elimina archivo si el usuario cancela
 """
+import time
 from typing import Optional
-
-from app.services import supabase_storage_service as storage
-from app.services import ocr_service
-from app.services import gemini_service
-from app.config import get_settings
 from decimal import Decimal
 from datetime import datetime, timezone
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from rapidfuzz import fuzz, process
 
+from app.services import supabase_storage_service as storage
+from app.services import ocr_service
+from app.services import gemini_service
+from app.config import get_settings
 from app.models.inventario_model import Producto
 from app.models.facturacion_model import Factura, DetFactura
 from app.models.proveedor_model import Proveedor
@@ -35,14 +29,7 @@ settings = get_settings()
 # UPLOAD
 # ============================================================
 
-def upload_archivo(
-    contenido: bytes,
-    nombre_original: str,
-    tipo_mime: str,
-) -> dict:
-    """
-    Sube un archivo de factura a Supabase y retorna metadata para frontend.
-    """
+def upload_archivo(contenido: bytes, nombre_original: str, tipo_mime: str) -> dict:
     if not (ocr_service.es_pdf(tipo_mime) or ocr_service.es_imagen(tipo_mime)):
         raise ValueError(
             f"Tipo de archivo no soportado: {tipo_mime}. "
@@ -73,59 +60,56 @@ def upload_archivo(
 
 
 # ============================================================
-# EXTRACT (Gemini -> fallback Tesseract)
+# EXTRACT (Gemini con reintentos -> fallback Tesseract)
 # ============================================================
 
 def _normalizar_rut(rut: Optional[str]) -> Optional[str]:
-    """Convierte '77.242.614-3' a '77242614-3' para consistencia."""
     if not rut:
         return None
     return rut.replace(".", "").replace(" ", "").upper()
 
 
 def extraer_datos(storage_path: str, tipo_mime: str) -> dict:
-    """
-    Descarga el archivo y lo procesa con IA (Gemini) o OCR (Tesseract) como fallback.
-
-    Returns:
-        dict compatible con OCRExtractionResponse, con items completos cuando es posible.
-    """
     contenido = storage.descargar_archivo(storage_path)
 
-    # === INTENTO 1: Gemini IA ===
+    # === Gemini con reintentos ===
     if settings.gemini_api_key:
-        print("[Ingesta] Intentando con Gemini IA...")
-        resultado_ia = gemini_service.analizar_factura(contenido, tipo_mime)
+        for intento in range(3):
+            print(f"[Ingesta] Gemini intento {intento + 1}/3...")
+            resultado_ia = gemini_service.analizar_factura(contenido, tipo_mime)
 
-        if resultado_ia:
-            print("[Ingesta] Gemini OK")
-            items = []
-            for item in resultado_ia.get("items", []) or []:
-                items.append({
-                    "descripcion_raw": item.get("descripcion") or "",
-                    "cantidad": item.get("cantidad"),
-                    "unidad": item.get("unidad"),
-                    "precio_unitario": item.get("precio_unitario"),
-                    "subtotal": item.get("subtotal"),
-                })
+            if resultado_ia:
+                print("[Ingesta] Gemini OK")
+                items = []
+                for item in resultado_ia.get("items", []) or []:
+                    items.append({
+                        "descripcion_raw": item.get("descripcion") or "",
+                        "cantidad": item.get("cantidad"),
+                        "unidad": item.get("unidad"),
+                        "precio_unitario": item.get("precio_unitario"),
+                        "subtotal": item.get("subtotal"),
+                    })
+                return {
+                    "rut_proveedor": _normalizar_rut(resultado_ia.get("proveedor_rut")),
+                    "proveedor_razon_social": resultado_ia.get("proveedor_razon_social"),
+                    "folio": resultado_ia.get("folio"),
+                    "fecha_emision": resultado_ia.get("fecha_emision"),
+                    "subtotal": resultado_ia.get("subtotal"),
+                    "iva": resultado_ia.get("iva"),
+                    "total": resultado_ia.get("total"),
+                    "monto_neto": resultado_ia.get("subtotal"),
+                    "items": items,
+                    "texto_crudo": "(extraido con Gemini IA)",
+                    "fuente": "gemini",
+                }
 
-            return {
-                "rut_proveedor": _normalizar_rut(resultado_ia.get("proveedor_rut")),
-                "proveedor_razon_social": resultado_ia.get("proveedor_razon_social"),
-                "folio": resultado_ia.get("folio"),
-                "fecha_emision": resultado_ia.get("fecha_emision"),
-                "subtotal": resultado_ia.get("subtotal"),
-                "iva": resultado_ia.get("iva"),
-                "total": resultado_ia.get("total"),
-                "monto_neto": resultado_ia.get("subtotal"),  # alias
-                "items": items,
-                "texto_crudo": "(extraido con Gemini IA)",
-                "fuente": "gemini",
-            }
+            if intento < 2:
+                print(f"[Ingesta] Gemini fallo, reintentando en 2s...")
+                time.sleep(2)
 
-        print("[Ingesta] Gemini fallo, usando Tesseract...")
+        print("[Ingesta] Gemini fallo 3 veces, usando Tesseract...")
 
-    # === INTENTO 2 (fallback): Tesseract OCR ===
+    # === Fallback Tesseract ===
     datos_ocr = ocr_service.procesar_archivo(contenido, tipo_mime)
     return {
         "rut_proveedor": datos_ocr.get("rut_proveedor"),
@@ -156,7 +140,8 @@ def obtener_preview_url(storage_path: str, segundos_validos: int = 3600) -> str:
 
 def cancelar_ingesta(storage_path: str) -> None:
     storage.eliminar_archivo(storage_path)
-    
+
+
 # ============================================================
 # HOMOLOGACION
 # ============================================================
@@ -173,18 +158,10 @@ async def homologar_items(
     total,
     items_raw: list[dict],
 ) -> dict:
-    """
-    Cruza cada item OCR contra el catálogo de productos usando fuzzy matching.
-    Score >= 80 -> homologado automáticamente (requiere_revision=False)
-    Score <  80 -> requiere selección manual del usuario
-    """
-    # Traer todos los productos del catálogo
     result = await db.execute(
         select(Producto).options(selectinload(Producto.unidad_medida))
     )
     productos = result.scalars().all()
-
-    # Mapa nombre -> producto para búsqueda rápida
     nombres = {p.nom_producto: p for p in productos}
 
     items_homologados = []
@@ -192,7 +169,6 @@ async def homologar_items(
     for item in items_raw:
         descripcion = item.get("descripcion_raw") or item.get("descripcion") or ""
 
-        # Fuzzy match contra todos los nombres
         matches = process.extract(
             descripcion,
             nombres.keys(),
@@ -213,7 +189,6 @@ async def homologar_items(
                 nom_unidad_medida=prod.unidad_medida.nom_unidad_medida_abrev if prod.unidad_medida else None,
                 score_similitud=round(score, 2),
             ))
-            # Auto-homologar si la primera sugerencia supera el umbral
             if score >= 80 and id_seleccionado is None:
                 id_seleccionado = prod.id_producto
                 requiere_revision = False
@@ -251,11 +226,6 @@ async def commit_factura(
     datos: FacturaCommitRequest,
     id_usuario: int,
 ) -> Factura:
-    """
-    Persiste la factura confirmada por el usuario en BD.
-    Los triggers trg_stock_entrada se disparan automáticamente.
-    """
-    # Verificar que el proveedor existe
     result = await db.execute(
         select(Proveedor).where(Proveedor.id_proveedor == datos.id_proveedor)
     )
@@ -263,21 +233,19 @@ async def commit_factura(
     if not proveedor:
         raise ValueError(f"Proveedor {datos.id_proveedor} no encontrado")
 
-    # Crear factura
     factura = Factura(
         num_documento=datos.folio,
         fecha_emision=datos.fecha_emision,
         fecha_ingreso=datetime.now(timezone.utc),
         id_proveedor=datos.id_proveedor,
-        id_orden_compra=None,  # regla del proyecto: vacío en facturas de ingesta
+        id_orden_compra=None,
         id_usuario=id_usuario,
         estado_conciliacion="pendiente",
         obs=f"Ingesta OCR · id={datos.id_ingesta}",
     )
     db.add(factura)
-    await db.flush()  # obtener id_factura sin cerrar transacción
+    await db.flush()
 
-    # Crear detalles
     for item in datos.items:
         detalle = DetFactura(
             id_factura=factura.id_factura,
@@ -291,7 +259,6 @@ async def commit_factura(
     await db.commit()
     await db.refresh(factura)
 
-    # Retornar con detalles cargados
     result = await db.execute(
         select(Factura)
         .options(selectinload(Factura.detalles))
