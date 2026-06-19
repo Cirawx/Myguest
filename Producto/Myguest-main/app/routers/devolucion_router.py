@@ -45,6 +45,16 @@ async def crear_devolucion(
 ):
     return await devolucion_service.create_devolucion(db, datos)
 
+@router.delete("/devoluciones/{id_devolucion}", status_code=status.HTTP_204_NO_CONTENT)
+async def eliminar_devolucion(
+    id_devolucion: int,
+    db: AsyncSession = Depends(get_db),
+    usuario=Depends(get_current_user)
+):
+    eliminado = await devolucion_service.delete_devolucion(db, id_devolucion)
+    if not eliminado:
+        raise HTTPException(status_code=404, detail="Devolución no encontrada")
+
 
 # ── MERMAS ───────────────────────────────────────────────────────────────────
 

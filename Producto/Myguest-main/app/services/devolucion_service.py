@@ -99,3 +99,11 @@ async def delete_merma(db: AsyncSession, id_merma: int):
     await db.delete(merma)
     await db.commit()
     return True
+
+async def delete_devolucion(db: AsyncSession, id_devolucion: int):
+    devolucion = await get_devolucion_by_id(db, id_devolucion)
+    if not devolucion:
+        return False
+    await db.delete(devolucion)
+    await db.commit()
+    return True
