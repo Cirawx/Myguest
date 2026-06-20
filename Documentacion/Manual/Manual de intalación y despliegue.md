@@ -1,7 +1,7 @@
 ---
 title: "Manual de Instalación y Despliegue"
 subtitle: "MyGuest v2.0 — Sistema de Gestión Logística"
-author: "Carrera de Gastronomía, DuocUC"
+authors: "Camilo Alarcón, Nibaldo Araya, Diego Benavides y Claudio Molina"
 date: "Junio 2026"
 ---
 
