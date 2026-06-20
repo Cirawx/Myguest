@@ -40,6 +40,7 @@ const UsuariosPage = () => {
   const perfilLabel = (cod) => {
     if (cod === 0) return { label: "Administrador TI", color: "#8b5cf6" };
     if (cod === 1) return { label: "Admin Carrera", color: "#f59e0b" };
+    if (cod === 3) return { label: "Bodeguero", color: "#06b6d4" };
     return { label: "Docente", color: "#22c55e" };
   };
 
@@ -118,6 +119,7 @@ const UsuariosPage = () => {
               { value: "0", label: "Administrador TI" },
               { value: "1", label: "Admin Carrera" },
               { value: "2", label: "Docente" },
+              { value: "3", label: "Bodeguero" },
             ].map((f) => (
               <button
                 key={f.value}
@@ -165,7 +167,7 @@ const UsuariosPage = () => {
                 {/* Fila principal */}
                 <div
                   onClick={() => toggleExpandido(usuario.id_usuario)}
-                  className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight} ${expandido === usuario.id_usuario ? isDark ? styles.tablaRowActive : styles.tablaRowActiveLight : ""}`}
+                  className={`${styles.tablaRow} ${isDark ? styles.tablaRowDark : styles.tablaRowLight} ${expandido === usuario.id_usuario ? (isDark ? styles.tablaRowActive : styles.tablaRowActiveLight) : ""}`}
                 >
                   <div className={styles.usuarioInfo}>
                     <div

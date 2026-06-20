@@ -197,6 +197,7 @@ const UsuarioModal = ({ onClose, onUsuarioCreado }) => {
                 <option value="0">Administrador TI</option>
                 <option value="1">Admin Carrera</option>
                 <option value="2">Docente</option>
+                <option value="3">Bodeguero</option>
               </select>
             </div>
 
