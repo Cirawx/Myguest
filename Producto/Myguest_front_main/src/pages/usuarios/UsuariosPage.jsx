@@ -27,6 +27,7 @@ const UsuariosPage = () => {
   const [nuevoDocenteId, setNuevoDocenteId] = useState("");
   const [reemplazando, setReemplazando] = useState(false);
   const [mensajeReemplazo, setMensajeReemplazo] = useState("");
+  const [errorEliminar, setErrorEliminar] = useState("");
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -84,7 +85,7 @@ const UsuariosPage = () => {
       setExpandido(null);
       recargarUsuarios();
     } catch (err) {
-      alert("Error al eliminar el usuario");
+      setErrorEliminar(err.message || "No se pudo eliminar el usuario");
     }
   };
 
@@ -439,6 +440,53 @@ const UsuariosPage = () => {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        {usuarioEliminar && (
+          <div className={styles.overlay}>
+            <div
+              className={`${styles.confirmModal} ${isDark ? styles.tablaDark : styles.tablaLight}`}
+            >
+              <h3 className={`${isDark ? styles.dark : styles.light}`}>
+                ¿Eliminar usuario?
+              </h3>
+              <p className={styles.login}>
+                Esta acción no se puede deshacer. ¿Estás seguro de eliminar a{" "}
+                <strong>
+                  {usuarioEliminar.nom} {usuarioEliminar.primer_apellido}
+                </strong>
+                ?
+              </p>
+              {errorEliminar && (
+                <p
+                  style={{
+                    color: "#ef4444",
+                    fontSize: "13px",
+                    marginTop: "-8px",
+                    marginBottom: "16px",
+                  }}
+                >
+                  ⚠️ {errorEliminar}
+                </p>
+              )}
+              <div className={styles.acordeonAcciones}>
+                <button
+                  className={`${styles.cancelBtn} ${isDark ? styles.cancelDark : styles.cancelLight}`}
+                  onClick={() => {
+                    setUsuarioEliminar(null);
+                    setErrorEliminar("");
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className={styles.deleteConfirmBtn}
+                  onClick={eliminarUsuario}
+                >
+                  Sí, eliminar
+                </button>
+              </div>
             </div>
           </div>
         )}
