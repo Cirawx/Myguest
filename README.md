@@ -152,6 +152,18 @@ Para instrucciones detalladas de instalación local y despliegue, ver [`Manual_I
 
 ---
 
+## 🔄 Metodología de Trabajo
+ 
+El desarrollo del proyecto se llevó a cabo utilizando **Kanban** como metodología de gestión, con un flujo continuo de trabajo organizado en columnas de estado (pendiente, en progreso, completado) gestionadas a través de reuniones periódicas del equipo, sin el uso de una herramienta digital de tablero dedicada.
+ 
+El equipo trabajó sin asignación de roles formales de metodología (no hubo Scrum Master ni Product Owner designado); las decisiones técnicas y de priorización se tomaron de forma colaborativa entre los integrantes según su área de aporte.
+ 
+**Entregas de avance:** se realizaron reuniones de seguimiento con el cliente (Carrera de Gastronomía) cada **1 a 2 semanas**, en las que se mostraban los módulos y funcionalidades completados hasta esa fecha, recogiendo retroalimentación que se incorporaba directamente en las siguientes iteraciones de desarrollo. Este ciclo corto de retroalimentación permitió detectar y corregir tempranamente desajustes entre lo desarrollado y las necesidades reales de la operación de bodega y academia.
+ 
+Las actas de estas reuniones de seguimiento se encuentran documentadas en la carpeta [`Documentacion/Actas_Reunion/`](./Documentacion/Actas_Reunion/) del repositorio.
+ 
+---
+
 ## 👥 Equipo de Desarrollo
 
 Todos los integrantes del equipo participan como **colaboradores** del proyecto, aportando en las distintas áreas de frontend, backend, base de datos y documentación.
