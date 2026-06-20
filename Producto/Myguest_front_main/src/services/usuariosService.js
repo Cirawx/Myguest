@@ -19,3 +19,15 @@ export const eliminarUsuario = async (token, id) => {
   if (!res.ok) throw new Error('Error al eliminar usuario')
   return true
 }
+
+export const reemplazarDocente = async (token, id_usuario_actual, nuevo_id_usuario) => {
+  const res = await fetch(`${API_URL}/usuarios/${id_usuario_actual}/reemplazar-docente?nuevo_id_usuario=${nuevo_id_usuario}`, {
+    method: 'PUT',
+    headers: getHeaders(token),
+  })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.detail || 'Error al reemplazar docente')
+  }
+  return res.json()
+}

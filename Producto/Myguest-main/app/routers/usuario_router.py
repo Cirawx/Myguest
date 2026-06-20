@@ -43,3 +43,21 @@ async def eliminar_usuario(id_usuario: int, db: AsyncSession = Depends(get_db)):
     eliminado = await usuario_service.delete_usuario(db, id_usuario)
     if not eliminado:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+@router.put("/{id_usuario_actual}/reemplazar-docente", status_code=status.HTTP_200_OK)
+async def reemplazar_docente(
+    id_usuario_actual: int,
+    nuevo_id_usuario: int,
+    db: AsyncSession = Depends(get_db)
+):
+    actualizados = await usuario_service.reemplazar_docente_talleres(db, id_usuario_actual, nuevo_id_usuario)
+    return {"talleres_actualizados": actualizados}
+
+@router.put("/{id_usuario_actual}/reemplazar-docente", status_code=status.HTTP_200_OK)
+async def reemplazar_docente(
+    id_usuario_actual: int,
+    nuevo_id_usuario: int,
+    db: AsyncSession = Depends(get_db)
+):
+    actualizados = await usuario_service.reemplazar_docente_talleres(db, id_usuario_actual, nuevo_id_usuario)
+    return {"talleres_actualizados": actualizados}

@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from app.models.usuario_model import Usuario
 from app.schemas.usuario_schema import UsuarioCreate, UsuarioUpdate
 from app.utils.security import get_password_hash
+from app.models.academico_model import ProgTaller
 
 async def get_usuario_by_id(db: AsyncSession, id_usuario: int):
     result = await db.execute(select(Usuario).where(Usuario.id_usuario == id_usuario))
@@ -58,3 +59,13 @@ async def delete_usuario(db: AsyncSession, id_usuario: int):
             status_code=400,
             detail="No se puede eliminar este usuario porque tiene talleres asociados. Por favor, retirelo de los talleres primero."
         )
+
+async def reemplazar_docente_talleres(db: AsyncSession, id_usuario_actual: int, nuevo_id_usuario: int):
+    result = await db.execute(
+        select(ProgTaller).where(ProgTaller.id_usuario == id_usuario_actual)
+    )
+    talleres = result.scalars().all()
+    for t in talleres:
+        t.id_usuario = nuevo_id_usuario
+    await db.commit()
+    return len(talleres)

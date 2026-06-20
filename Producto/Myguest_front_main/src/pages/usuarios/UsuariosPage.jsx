@@ -9,6 +9,7 @@ import {
   getUsuarios,
   eliminarUsuario as eliminarUsuarioService,
 } from "../../services/usuariosService";
+import { reemplazarDocente } from "../../services/usuariosService";
 
 const UsuariosPage = () => {
   const { isDark } = useThemeStore();
@@ -22,6 +23,10 @@ const UsuariosPage = () => {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [usuarioEditar, setUsuarioEditar] = useState(null);
   const [usuarioEliminar, setUsuarioEliminar] = useState(null);
+  const [usuarioReemplazar, setUsuarioReemplazar] = useState(null);
+  const [nuevoDocenteId, setNuevoDocenteId] = useState("");
+  const [reemplazando, setReemplazando] = useState(false);
+  const [mensajeReemplazo, setMensajeReemplazo] = useState("");
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -80,6 +85,30 @@ const UsuariosPage = () => {
       recargarUsuarios();
     } catch (err) {
       alert("Error al eliminar el usuario");
+    }
+  };
+
+  const handleReemplazar = async () => {
+    if (!nuevoDocenteId) return;
+    setReemplazando(true);
+    try {
+      const resultado = await reemplazarDocente(
+        token,
+        usuarioReemplazar.id_usuario,
+        parseInt(nuevoDocenteId),
+      );
+      setMensajeReemplazo(
+        `${resultado.talleres_actualizados} talleres reasignados correctamente.`,
+      );
+      setTimeout(() => {
+        setUsuarioReemplazar(null);
+        setNuevoDocenteId("");
+        setMensajeReemplazo("");
+      }, 2000);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setReemplazando(false);
     }
   };
 
@@ -295,6 +324,17 @@ const UsuariosPage = () => {
                       >
                         ✏️ Editar
                       </button>
+                      {usuario.cod_perfil === 2 && (
+                        <button
+                          className={styles.editBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUsuarioReemplazar(usuario);
+                          }}
+                        >
+                          🔄 Reemplazar
+                        </button>
+                      )}
                       <button
                         className={styles.deleteBtn}
                         onClick={(e) => {
@@ -331,35 +371,74 @@ const UsuariosPage = () => {
             onUsuarioEditado={recargarUsuarios}
           />
         )}
-        {usuarioEliminar && (
+        {usuarioReemplazar && (
           <div className={styles.overlay}>
             <div
               className={`${styles.confirmModal} ${isDark ? styles.tablaDark : styles.tablaLight}`}
             >
               <h3 className={`${isDark ? styles.dark : styles.light}`}>
-                ¿Eliminar usuario?
+                Reemplazar docente
               </h3>
               <p className={styles.login}>
-                Esta acción no se puede deshacer. ¿Estás seguro de eliminar a{" "}
+                Selecciona el nuevo docente que reemplazará a{" "}
                 <strong>
-                  {usuarioEliminar.nom} {usuarioEliminar.primer_apellido}
-                </strong>
-                ?
+                  {usuarioReemplazar.nom} {usuarioReemplazar.primer_apellido}
+                </strong>{" "}
+                en todos sus talleres asignados.
               </p>
-              <div className={styles.acordeonAcciones}>
-                <button
-                  className={`${styles.cancelBtn} ${isDark ? styles.cancelDark : styles.cancelLight}`}
-                  onClick={() => setUsuarioEliminar(null)}
+
+              {mensajeReemplazo ? (
+                <p
+                  style={{
+                    color: "#22c55e",
+                    fontWeight: 600,
+                    margin: "16px 0",
+                  }}
                 >
-                  Cancelar
-                </button>
-                <button
-                  className={styles.deleteConfirmBtn}
-                  onClick={eliminarUsuario}
+                  ✅ {mensajeReemplazo}
+                </p>
+              ) : (
+                <select
+                  value={nuevoDocenteId}
+                  onChange={(e) => setNuevoDocenteId(e.target.value)}
+                  className={`${styles.busquedaInput} ${isDark ? styles.inputDark : styles.inputLight}`}
+                  style={{ width: "100%", marginBottom: "16px" }}
                 >
-                  Sí, eliminar
-                </button>
-              </div>
+                  <option value="">Seleccionar docente</option>
+                  {usuarios
+                    .filter(
+                      (u) =>
+                        u.cod_perfil === 2 &&
+                        u.id_usuario !== usuarioReemplazar.id_usuario,
+                    )
+                    .map((u) => (
+                      <option key={u.id_usuario} value={u.id_usuario}>
+                        {u.nom} {u.primer_apellido}
+                      </option>
+                    ))}
+                </select>
+              )}
+
+              {!mensajeReemplazo && (
+                <div className={styles.acordeonAcciones}>
+                  <button
+                    className={`${styles.cancelBtn} ${isDark ? styles.cancelDark : styles.cancelLight}`}
+                    onClick={() => {
+                      setUsuarioReemplazar(null);
+                      setNuevoDocenteId("");
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    className={styles.submitBtn}
+                    onClick={handleReemplazar}
+                    disabled={!nuevoDocenteId || reemplazando}
+                  >
+                    {reemplazando ? "Reemplazando..." : "Confirmar Reemplazo"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
