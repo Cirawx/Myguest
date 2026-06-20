@@ -167,6 +167,11 @@ const AcademicoPage = () => {
     return a ? `${sigla} — ${a.nom_asign}` : sigla;
   };
 
+  const getNombreDocente = (id_usuario) => {
+    const u = usuarios.find((u) => u.id_usuario === id_usuario);
+    return u ? `${u.nom} ${u.primer_apellido}` : `Usuario #${id_usuario}`;
+  };
+
   const getNombrePeriodo = (cod) => {
     const p = periodos.find((p) => p.cod_periodo_academ === cod);
     return p ? p.nom_periodo_academ_abrev : `Período ${cod}`;
@@ -346,6 +351,7 @@ const AcademicoPage = () => {
               <span>Fecha</span>
               <span>Período</span>
               <span>Sección</span>
+              <span>Docente</span>
             </div>
             {progTaller.length === 0 ? (
               <p className={styles.empty}>No hay talleres programados</p>
@@ -365,6 +371,9 @@ const AcademicoPage = () => {
                     {getNombrePeriodo(t.cod_periodo_academ)}
                   </span>
                   <span className={styles.cod}>Sección {t.seccion}</span>
+                  <span className={styles.cod}>
+                    {getNombreDocente(t.id_usuario)}
+                  </span>
                 </div>
               ))
             )}
@@ -388,6 +397,7 @@ const AcademicoPage = () => {
               <span>Asignatura</span>
               <span>Fecha</span>
               <span>Sección</span>
+              <span>Docente</span>
               <span>Observaciones</span>
             </div>
             {regisTaller.length === 0 ? (
@@ -405,6 +415,9 @@ const AcademicoPage = () => {
                   </span>
                   <span className={styles.cod}>{r.fecha}</span>
                   <span className={styles.cod}>Sección {r.seccion}</span>
+                  <span className={styles.cod}>
+                    {getNombreDocente(r.id_usuario)}
+                  </span>
                   <span className={styles.cod}>{r.obs || "—"}</span>
                 </div>
               ))

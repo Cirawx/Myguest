@@ -133,7 +133,7 @@
 
 .tablaHeader {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
   padding: 12px 20px;
   font-size: 13px;
   font-weight: 600;
@@ -154,7 +154,7 @@
 
 .tablaRow {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
   padding: 14px 20px;
   align-items: center;
   border-top: 1px solid;
