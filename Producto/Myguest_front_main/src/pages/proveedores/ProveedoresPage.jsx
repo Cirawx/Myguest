@@ -377,6 +377,57 @@ const ProveedoresPage = () => {
                               : "—"}
                           </span>
                         </div>
+                        {f.id_proveedor &&
+                          (() => {
+                            const prov = proveedores.find(
+                              (p) => p.id_proveedor === f.id_proveedor,
+                            );
+                            if (!prov) return null;
+                            return (
+                              <>
+                                <div className={styles.acordeonItem}>
+                                  <span className={styles.acordeonLabel}>
+                                    RUT proveedor
+                                  </span>
+                                  <span
+                                    className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                                  >
+                                    {prov.rut || "—"}
+                                  </span>
+                                </div>
+                                <div className={styles.acordeonItem}>
+                                  <span className={styles.acordeonLabel}>
+                                    Contacto
+                                  </span>
+                                  <span
+                                    className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                                  >
+                                    {prov.contacto || "—"}
+                                  </span>
+                                </div>
+                                <div className={styles.acordeonItem}>
+                                  <span className={styles.acordeonLabel}>
+                                    Email
+                                  </span>
+                                  <span
+                                    className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                                  >
+                                    {prov.email || "—"}
+                                  </span>
+                                </div>
+                                <div className={styles.acordeonItem}>
+                                  <span className={styles.acordeonLabel}>
+                                    Teléfono
+                                  </span>
+                                  <span
+                                    className={`${styles.acordeonValue} ${isDark ? styles.dark : styles.light}`}
+                                  >
+                                    {prov.telefono || "—"}
+                                  </span>
+                                </div>
+                              </>
+                            );
+                          })()}
                       </div>
                       <div className={styles.acordeonAcciones}>
                         <button
