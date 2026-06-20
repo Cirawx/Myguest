@@ -6,7 +6,7 @@ import styles from './ProductoModal.module.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-const ProductoEditModal = ({ producto, onClose, onProductoEditado, familias }) => {
+const ProductoEditModal = ({ producto, onClose, onProductoEditado }) => {
   const { isDark } = useThemeStore()
   const { token } = useAuthStore()
   const [loading, setLoading] = useState(false)
@@ -17,7 +17,6 @@ const ProductoEditModal = ({ producto, onClose, onProductoEditado, familias }) =
     precio: producto.precio || '',
     cod_unidad_medida: String(producto.cod_unidad_medida),
     cod_categ_producto: String(producto.cod_categ_producto),
-    cod_familia: producto.cod_familia ? String(producto.cod_familia) : ''
   })
 
   const handleChange = (e) => {
@@ -41,7 +40,6 @@ const ProductoEditModal = ({ producto, onClose, onProductoEditado, familias }) =
           precio: parseInt(form.precio),
           cod_unidad_medida: parseInt(form.cod_unidad_medida),
           cod_categ_producto: parseInt(form.cod_categ_producto),
-          cod_familia: form.cod_familia ? parseInt(form.cod_familia) : null
         })
       })
 
@@ -125,22 +123,6 @@ const ProductoEditModal = ({ producto, onClose, onProductoEditado, familias }) =
                 ))}
               </select>
             </div>
-
-            <div className={`${styles.field} ${styles.fullWidth}`}>
-              <label className={styles.label}>Familia (opcional)</label>
-              <select
-                name="cod_familia"
-                value={form.cod_familia}
-                onChange={handleChange}
-                className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
-              >
-                <option value="">Sin familia</option>
-                {familias.map(f => (
-                  <option key={f.cod_familia} value={f.cod_familia}>{f.nom_familia}</option>
-                ))}
-              </select>
-            </div>
-
           </div>
 
           {error && <div className={styles.error}>{error}</div>}

@@ -233,7 +233,6 @@ const InventarioPage = () => {
           <ProductoModal
             onClose={() => setMostrarModal(false)}
             onProductoCreado={recargarProductos}
-            familias={familias}
           />
         )}
       </div>
@@ -477,7 +476,6 @@ const TablaProductos = ({ productos, isDark, token, onRecargar }) => {
           producto={productoEditar}
           onClose={() => setProductoEditar(null)}
           onProductoEditado={onRecargar}
-          familias={familias}
         />
       )}
     </>

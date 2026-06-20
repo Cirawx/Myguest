@@ -6,7 +6,7 @@ import { UNIDADES, CATEGORIAS } from '../../utils/inventarioData'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://myguest-production-9e8f.up.railway.app'
 
-const ProductoModal = ({ onClose, onProductoCreado, familias }) => {
+const ProductoModal = ({ onClose, onProductoCreado }) => {
   const { isDark } = useThemeStore()
   const { token } = useAuthStore()
   const [loading, setLoading] = useState(false)
@@ -17,7 +17,6 @@ const ProductoModal = ({ onClose, onProductoCreado, familias }) => {
     precio: '',
     cod_unidad_medida: '1',
     cod_categ_producto: '0',
-    cod_familia: ''
   })
 
   const handleChange = (e) => {
@@ -41,7 +40,6 @@ const ProductoModal = ({ onClose, onProductoCreado, familias }) => {
           precio: parseInt(form.precio),
           cod_unidad_medida: parseInt(form.cod_unidad_medida),
           cod_categ_producto: parseInt(form.cod_categ_producto),
-          cod_familia: form.cod_familia ? parseInt(form.cod_familia) : null
         })
       })
 
@@ -127,22 +125,6 @@ const ProductoModal = ({ onClose, onProductoCreado, familias }) => {
                 ))}
               </select>
             </div>
-
-            <div className={`${styles.field} ${styles.fullWidth}`}>
-              <label className={styles.label}>Familia (opcional)</label>
-              <select
-                name="cod_familia"
-                value={form.cod_familia}
-                onChange={handleChange}
-                className={`${styles.input} ${isDark ? styles.inputDark : styles.inputLight}`}
-              >
-                <option value="">Sin familia</option>
-                {familias.map(f => (
-                  <option key={f.cod_familia} value={f.cod_familia}>{f.nom_familia}</option>
-                ))}
-              </select>
-            </div>
-
           </div>
 
           {error && <div className={styles.error}>{error}</div>}
