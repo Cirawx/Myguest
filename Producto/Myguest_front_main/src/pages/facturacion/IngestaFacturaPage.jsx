@@ -342,7 +342,7 @@ const IngestaFacturaPage = () => {
             </h1>
             <p className={styles.subtitle}>
               Sube un PDF o foto de factura y extrae automáticamente los datos
-              con OCR
+              con IA
             </p>
           </div>
           <button
@@ -361,7 +361,7 @@ const IngestaFacturaPage = () => {
           </div>
           <div className={stepClass(2)}>
             <div className={stepNumber(2, estado === ESTADOS.VALIDANDO)}>2</div>
-            <span className={styles.stepLabel}>Procesar OCR</span>
+            <span className={styles.stepLabel}>Procesar factura con IA</span>
           </div>
           <div className={stepClass(3)}>
             <div className={stepNumber(3, false)}>3</div>
@@ -406,7 +406,7 @@ const IngestaFacturaPage = () => {
             <span className={styles.spinner}></span>
             {estado === ESTADOS.SUBIENDO
               ? "Subiendo archivo al servidor..."
-              : "Procesando con OCR... (puede tardar 5-15 segundos)"}
+              : "Procesando con IA... (puede tardar 5-15 segundos)"}
           </div>
         )}
 

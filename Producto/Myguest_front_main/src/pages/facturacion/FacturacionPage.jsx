@@ -109,7 +109,7 @@ const FacturacionPage = () => {
               style={{ background: '#2563eb' }}
               title="Subir factura PDF/foto y extraer datos automáticamente con OCR"
             >
-              📥 Subir con OCR
+              📥 Subir con IA
             </button>
             <button
               className={styles.newBtn}

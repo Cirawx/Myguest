@@ -8,6 +8,7 @@ const menuItems = [
   { path: '/dashboard',    label: 'Dashboard',    icon: '📊', modulo: 'dashboard' },
   { path: '/usuarios',     label: 'Usuarios',     icon: '👤', modulo: 'usuarios' },
   { path: '/academico',    label: 'Académico',    icon: '🎓', modulo: 'academico' },
+  { path: '/recetario',    label: 'Programación',    icon: '📋', modulo: 'recetario' },
   { path: '/inventario',   label: 'Inventario',   icon: '📦', modulo: 'inventario' },
   { path: '/proveedores',  label: 'Proveedores',  icon: '🏭', modulo: 'proveedores' },
   { path: '/compras',      label: 'Compras',      icon: '🛒', modulo: 'compras' },
@@ -15,7 +16,6 @@ const menuItems = [
   { path: '/mermas',       label: 'Mermas',       icon: '🗑️', modulo: 'mermas' },
   { path: '/devoluciones', label: 'Devoluciones', icon: '↩️', modulo: 'devoluciones' },
   { path: '/reportes',     label: 'Reportes',     icon: '📈', modulo: 'reportes' },
-  { path: '/recetario',    label: 'Recetario',    icon: '📋', modulo: 'recetario' },
 ]
 
 const Sidebar = ({ isOpen, onClose }) => {
